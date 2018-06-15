@@ -118,7 +118,6 @@ if withHists:
  ut.bookHist(h,'chi2','Chi2/DOF',100,0.,20.)
 
 import shipDet_conf
-gFairBaseContFact = ROOT.FairBaseContFact() # required by change to FairBaseContFact to avoid TList::Clear errors
 run = ROOT.FairRunSim()
 run.SetName("TGeant4")  # Transport engine
 run.SetOutputFile("dummy")  # Output file
@@ -130,7 +129,7 @@ run.Init()
 import geomGeant4
 
 if hasattr(ShipGeo.Bfield,"fieldMap"):
-  fieldMaker = geomGeant4.addVMCFields(ShipGeo.Bfield.fieldMap, ShipGeo.Bfield.z, True)
+  fieldMaker = geomGeant4.addVMCFields(ShipGeo, '', True)
 
 # make global variables
 builtin.debug    = debug
