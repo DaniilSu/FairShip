@@ -1559,17 +1559,30 @@ void veto::ConstructGeometry()
         const char* Rock = "rock";
         const char* Ain  = "AbsorberAdd";
         const char* Aout = "AbsorberAddCore";
+        const char* Yoke = "magyoke"
+        const char* MCoil1 = "MCoil1"
+		const char* MCoil2 = "MCoil2"
+		const char* MCoil3 = "MCoil3"
+		const char* MCoil4 = "MCoil4"
+        const char* CV = "CV"
         TObjArray* volumelist = gGeoManager->GetListOfVolumes();
         int lastvolume = volumelist->GetLast();
         int volumeiterator=0;
         while ( volumeiterator<=lastvolume ) {
          const char* volumename = volumelist->At(volumeiterator)->GetName();
          const char* classname  = volumelist->At(volumeiterator)->ClassName();
-         if (strstr(classname,Vol)){
-          if (strstr(volumename,Mag) || strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout)){
-            AddSensitiveVolume(gGeoManager->GetVolume(volumename));
-            cout << "veto added "<< volumename <<endl;
+         if (strstr(classname,Vol)) {
+          if (fDesign == 4) {
+            if (strstr(volumename,Mag) || strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout) || strstr(volumename,magyoke) || strstr(volumename,MCoil1) || strstr(volumename,MCoil2) || strstr(volumename,MCoil3) || strstr(volumename,MCoil4) || strstr(volumename,CV)){
+              AddSensitiveVolume(gGeoManager->GetVolume(volumename));
+              cout << "veto added "<< volumename <<endl;
           }
+          else {
+			if (strstr(volumename,Mag) || strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout)){
+              AddSensitiveVolume(gGeoManager->GetVolume(volumename));
+              cout << "veto added "<< volumename <<endl;
+		  }
+         }
          }
          volumeiterator++;
         }
