@@ -1572,19 +1572,26 @@ void veto::ConstructGeometry()
          const char* volumename = volumelist->At(volumeiterator)->GetName();
          const char* classname  = volumelist->At(volumeiterator)->ClassName();
          if (strstr(classname,Vol)) {
-          if (fDesign == 4) {
-            if (strstr(volumename,Mag) || strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout) || strstr(volumename,magyoke) || strstr(volumename,MCoil1) || strstr(volumename,MCoil2) || strstr(volumename,MCoil3) || strstr(volumename,MCoil4) || strstr(volumename,CV)) {
+            if (strstr(volumename,Mag) || strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout)) {
               AddSensitiveVolume(gGeoManager->GetVolume(volumename));
+              if (strstr(volumename,"SHiPMagnet")) {
+                  cout << "SHiPMagnet condition" << endl;
+				  AddSensitiveVolume(gGeoManager->GetVolume(magyoke));
+				  AddSensitiveVolume(gGeoManager->GetVolume(MCoil1));
+				  AddSensitiveVolume(gGeoManager->GetVolume(MCoil2));
+				  AddSensitiveVolume(gGeoManager->GetVolume(MCoil3));
+				  AddSensitiveVolume(gGeoManager->GetVolume(MCoil4));
+				  AddSensitiveVolume(gGeoManager->GetVolume(CV));
+				  cout << "veto added to " << magyoke << " subvolume" << endl;
+				  cout << "veto added to " << MCoil1 << " subvolume" << endl;
+				  cout << "veto added to " << MCoil2 << " subvolume" << endl;
+				  cout << "veto added to " << MCoil3 << " subvolume" << endl;
+				  cout << "veto added to " << MCoil4 << " subvolume" << endl;
+				  cout << "veto added to " << CV << " subvolume" << endl;
+			  }
               cout << "veto added "<< volumename <<endl;
 			}
 		  }
-          else {
-			if (strstr(volumename,Mag) || strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout)) {
-              AddSensitiveVolume(gGeoManager->GetVolume(volumename));
-              cout << "veto added "<< volumename <<endl;
-		    }
-		  }
-         }
          volumeiterator++;
         }
      }
