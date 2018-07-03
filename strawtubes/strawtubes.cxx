@@ -618,7 +618,8 @@ void strawtubes::ConstructGeometry()
             TGeoHMatrix *h5 = new TGeoHMatrix(c5);	
 		
 	    vac_12->AddNode(viewframe_12, statnb*10000000+vnb*1000000,h5);
-	    viewframe_12->SetLineColor(kRed);	 	    	 
+	    viewframe_12->SetLineColor(kRed);
+            TGeoVolume *planes_12 = new TGeoVolumeAssembly("planes_12");	    
   	  	 	
 	    for (Int_t pnb=0; pnb<2; pnb++) {
 	      //plane loop	   
@@ -632,8 +633,10 @@ void strawtubes::ConstructGeometry()
 	      TGeoTranslation t3;
 	      t3.SetTranslation(0, 0,(vnb-3./2.)*(fDeltaz_view)+(pnb-1./2.)*fDeltaz_plane12);	
 	      TGeoCombiTrans d3(t3, r5); 
-	      TGeoHMatrix *j3 = new TGeoHMatrix(d3);	  
-	      vac_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,j3); 	     
+	      TGeoHMatrix *j3 = new TGeoHMatrix(d3);
+	      //vac_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,j3);
+	      planes_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,j3);
+              TGeoVolume *layers_12 = new TGeoVolumeAssembly("layers_12");	      
 	
               for (Int_t lnb=0; lnb<2; lnb++) {
    
@@ -643,7 +646,8 @@ void strawtubes::ConstructGeometry()
 		 TString nmlayer_12 = nmplane_12+"_layer_"; nmlayer_12 += lnb;
 		 TGeoBBox *layer_12 = new TGeoBBox("layer box_12", fStraw_length_12+eps/4, ftr12ydim+eps/4, layerwidth/2.+eps/4);
 		 TGeoVolume *layerbox_12 = new TGeoVolume(nmlayer_12, layer_12, med);		        
-	         planebox_12->AddNode(layerbox_12, statnb*10000000+vnb*1000000+pnb*100000+lnb*10000,new TGeoTranslation(0,0,(lnb-1./2.)*fDeltaz_layer12)); 	  
+	         //planebox_12->AddNode(layerbox_12, statnb*10000000+vnb*1000000+pnb*100000+lnb*10000,new TGeoTranslation(0,0,(lnb-1./2.)*fDeltaz_layer12)); 	  
+		 layers_12->AddNode(layerbox_12, statnb*10000000+vnb*1000000+pnb*100000+lnb*10000,new TGeoTranslation(0,0,(lnb-1./2.)*fDeltaz_layer12));
 	
                  //layer loop
 	         TGeoRotation r6s;	
@@ -661,10 +665,12 @@ void strawtubes::ConstructGeometry()
                  //end of straw loop
                  }
               //end of layer loop
-              }
-	    //end of plane loop		
+	      }
+	    //end of plane loop	
+	      planebox_12->AddNode(layers_12,statnb*10000000+vnb*1000000+pnb*100000);	
             }	
           //end of view loop
+	    vac_12->AddNode(planes_12,statnb*10000000+vnb*1000000);
           }
        //end of station1/2
        }
@@ -715,7 +721,8 @@ void strawtubes::ConstructGeometry()
             TGeoHMatrix *h5 = new TGeoHMatrix(c5);	
 		
 	    vac->AddNode(viewframe, statnb*10000000+vnb*1000000,h5);
-	    viewframe->SetLineColor(kRed);	 	    	 
+	    viewframe->SetLineColor(kRed);
+            TGeoVolume *planes = new TGeoVolumeAssembly("planes");	    
 	          	  	 	
 	    for (Int_t pnb=0; pnb<2; pnb++) {
 	      //plane loop	   
@@ -730,7 +737,9 @@ void strawtubes::ConstructGeometry()
 	      t3.SetTranslation(0, 0,(vnb-3./2.)*(fDeltaz_view)+(pnb-1./2.)*fDeltaz_plane12);	
 	      TGeoCombiTrans d3(t3, r5); 
 	      TGeoHMatrix *j3 = new TGeoHMatrix(d3);	  
-	      vac->AddNode(planebox, statnb*10000000+vnb*1000000+pnb*100000,j3); 	     
+	      //vac->AddNode(planebox, statnb*10000000+vnb*1000000+pnb*100000,j3); 	     
+	      planes->AddNode(planebox,statnb*10000000+vnb*1000000+pnb*100000,j3);
+	      TGeoVolume *layers = new TGeoVolumeAssembly("layers");
 	
               for (Int_t lnb=0; lnb<2; lnb++) {
    
@@ -740,7 +749,8 @@ void strawtubes::ConstructGeometry()
 		 TString nmlayer = nmplane+"_layer_"; nmlayer += lnb;
 		 TGeoBBox *layer = new TGeoBBox("layer box", fStraw_length+eps/4, ftr34ydim+eps/4, layerwidth/2.+eps/4);
 		 TGeoVolume *layerbox = new TGeoVolume(nmlayer, layer, med);		        
-	         planebox->AddNode(layerbox, statnb*10000000+vnb*1000000+pnb*100000+lnb*10000,new TGeoTranslation(0,0,(lnb-1./2.)*fDeltaz_layer12)); 	  
+	         //planebox->AddNode(layerbox, statnb*10000000+vnb*1000000+pnb*100000+lnb*10000,new TGeoTranslation(0,0,(lnb-1./2.)*fDeltaz_layer12)); 	  
+		 layers->AddNode(layerbox, statnb*10000000+vnb*1000000+pnb*100000+lnb*10000,new TGeoTranslation(0,0,(lnb-1./2.)*fDeltaz_layer12));
 	
                  //layer loop
 	         TGeoRotation r6s;	
@@ -760,8 +770,10 @@ void strawtubes::ConstructGeometry()
               //end of layer loop
               }
 	    //end of plane loop		
+	    planes->AddNode(layers,statnb*10000000+vnb*1000000+pnb*100000);
             }	
           //end of view loop
+	    vac->AddNode(planes,statnb*10000000+vnb*1000000);
           }
        //end of station1/2
        }       
