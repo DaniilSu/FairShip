@@ -619,7 +619,7 @@ void strawtubes::ConstructGeometry()
 		
 	    vac_12->AddNode(viewframe_12, statnb*10000000+vnb*1000000,h5);
 	    viewframe_12->SetLineColor(kRed);
-            TGeoVolume *planes_12 = new TGeoVolumeAssembly("planes_12");	    
+            TGeoVolume *planes_12 = new TGeoVolumeAssembly(nmview_12+"_planes_12");	    
   	  	 	
 	    for (Int_t pnb=0; pnb<2; pnb++) {
 	      //plane loop	   
@@ -636,7 +636,7 @@ void strawtubes::ConstructGeometry()
 	      TGeoHMatrix *j3 = new TGeoHMatrix(d3);
 	      //vac_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,j3);
 	      planes_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,new TGeoTranslation(0,0,(pnb-1./2.)*fDeltaz_plane12));
-              TGeoVolume *layers_12 = new TGeoVolumeAssembly("layers_12");	      
+              TGeoVolume *layers_12 = new TGeoVolumeAssembly(nmplane_12+"_layers_12");	      
 	
               for (Int_t lnb=0; lnb<2; lnb++) {
    
@@ -722,7 +722,7 @@ void strawtubes::ConstructGeometry()
 		
 	    vac->AddNode(viewframe, statnb*10000000+vnb*1000000,h5);
 	    viewframe->SetLineColor(kRed);
-            TGeoVolume *planes = new TGeoVolumeAssembly("planes");	    
+            TGeoVolume *planes = new TGeoVolumeAssembly(nmview+"_planes");	    
 	          	  	 	
 	    for (Int_t pnb=0; pnb<2; pnb++) {
 	      //plane loop	   
@@ -739,7 +739,7 @@ void strawtubes::ConstructGeometry()
 	      TGeoHMatrix *j3 = new TGeoHMatrix(d3);	  
 	      //vac->AddNode(planebox, statnb*10000000+vnb*1000000+pnb*100000,j3); 	     
 	      planes->AddNode(planebox,statnb*10000000+vnb*1000000+pnb*100000,new TGeoTranslation(0,0,(pnb-1./2.)*fDeltaz_plane12));
-	      TGeoVolume *layers = new TGeoVolumeAssembly("layers");
+	      TGeoVolume *layers = new TGeoVolumeAssembly(nmplane+"_layers");
 	
               for (Int_t lnb=0; lnb<2; lnb++) {
    
@@ -827,12 +827,12 @@ void strawtubes::StrawEndPoints(Int_t fDetectorID, TVector3 &vbot, TVector3 &vto
     TString plane = prefix;plane+=statnb;plane+=vnb;plane+=+pnb;plane+="00000";
     TString layer = prefix+"layer_";layer+=lnb;layer+="_";layer+=statnb;layer+=vnb;layer+=pnb;layer+=lnb;layer+="0000";
     TString wire = "wire_";
-    TString planes = "planes";
-    TString layers = "layers";
+    TString planes = prefix+"_planes";
+    TString layers = plane+"_layers";
     if (statnb==5){wire+="veto_";}
     wire+=(fDetectorID+1000);
-    if (statnb<3){wire = "wire_12_";wire+=(fDetectorID+1000);planes = "planes_12";layers = "layers_12";}
-    TString path = "/";path+=stat;path+="/";path+=planes;path+="/";path+=plane;path+="/";path+=planes;path+="/";path+=layer;path+="/";path+=wire;
+    if (statnb<3){wire = "wire_12_";wire+=(fDetectorID+1000);planes += "_12";layers += "_12";}
+    TString path = "/";path+=stat;path+="/";path+=planes;path+="/";path+=plane;path+="/";path+=layers;path+="/";path+=layer;path+="/";path+=wire;
     Bool_t rc = nav->cd(path);
     if (not rc){
       cout << "strawtubes::StrawDecode, TgeoNavigator failed "<<path<<endl; 
