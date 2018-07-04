@@ -635,7 +635,7 @@ void strawtubes::ConstructGeometry()
 	      TGeoCombiTrans d3(t3, r5); 
 	      TGeoHMatrix *j3 = new TGeoHMatrix(d3);
 	      //vac_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,j3);
-	      planes_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,j3);
+	      planes_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,new TGeoTranslation(0,0,(pnb-1./2.)*fDeltaz_plane12));
               TGeoVolume *layers_12 = new TGeoVolumeAssembly("layers_12");	      
 	
               for (Int_t lnb=0; lnb<2; lnb++) {
@@ -670,7 +670,7 @@ void strawtubes::ConstructGeometry()
 	      planebox_12->AddNode(layers_12,statnb*10000000+vnb*1000000+pnb*100000);	
             }	
           //end of view loop
-	    vac_12->AddNode(planes_12,statnb*10000000+vnb*1000000);
+	    vac_12->AddNode(planes_12,statnb*10000000+vnb*1000000,h5);
           }
        //end of station1/2
        }
@@ -738,7 +738,7 @@ void strawtubes::ConstructGeometry()
 	      TGeoCombiTrans d3(t3, r5); 
 	      TGeoHMatrix *j3 = new TGeoHMatrix(d3);	  
 	      //vac->AddNode(planebox, statnb*10000000+vnb*1000000+pnb*100000,j3); 	     
-	      planes->AddNode(planebox,statnb*10000000+vnb*1000000+pnb*100000,j3);
+	      planes->AddNode(planebox,statnb*10000000+vnb*1000000+pnb*100000,new TGeoTranslation(0,0,(pnb-1./2.)*fDeltaz_plane12));
 	      TGeoVolume *layers = new TGeoVolumeAssembly("layers");
 	
               for (Int_t lnb=0; lnb<2; lnb++) {
@@ -773,12 +773,10 @@ void strawtubes::ConstructGeometry()
 	    planebox->AddNode(layers,statnb*10000000+vnb*1000000+pnb*100000);
             }	
           //end of view loop
-	  vac->AddNode(planes,statnb*10000000+vnb*1000000);
+	  vac->AddNode(planes,statnb*10000000+vnb*1000000,h5);
           }
        //end of station1/2
        }       
-       
-       
      //end of station
      }
      std::cout << "tracking stations added" << std::endl;
