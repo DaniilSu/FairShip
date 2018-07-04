@@ -827,10 +827,12 @@ void strawtubes::StrawEndPoints(Int_t fDetectorID, TVector3 &vbot, TVector3 &vto
     TString plane = prefix;plane+=statnb;plane+=vnb;plane+=+pnb;plane+="00000";
     TString layer = prefix+"layer_";layer+=lnb;layer+="_";layer+=statnb;layer+=vnb;layer+=pnb;layer+=lnb;layer+="0000";
     TString wire = "wire_";
+    TString planes = "planes";
+    TString layers = "layers";
     if (statnb==5){wire+="veto_";}
     wire+=(fDetectorID+1000);
-    if (statnb<3){wire = "wire_12_";wire+=(fDetectorID+1000);}
-    TString path = "/";path+=stat;path+="/";path+=plane;path+="/";path+=layer;path+="/";path+=wire;
+    if (statnb<3){wire = "wire_12_";wire+=(fDetectorID+1000);planes = "planes_12";layers = "layers_12";}
+    TString path = "/";path+=stat;path+="/";path+=planes;path+="/";path+=plane;path+="/";path+=planes;path+="/";path+=layer;path+="/";path+=wire;
     Bool_t rc = nav->cd(path);
     if (not rc){
       cout << "strawtubes::StrawDecode, TgeoNavigator failed "<<path<<endl; 
