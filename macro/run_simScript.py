@@ -5,7 +5,7 @@ import shipRoot_conf
 import rootUtils as ut
 from ShipGeoConfig import ConfigRegistry
 
-debug = 0  # 1 print weights and field
+debug = 2  # 1 print weights and field
            # 2 make overlap check
 # Default HNL parameters
 theMass = 1.0*u.GeV
