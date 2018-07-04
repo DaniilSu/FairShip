@@ -770,10 +770,10 @@ void strawtubes::ConstructGeometry()
               //end of layer loop
               }
 	    //end of plane loop		
-	    planes->AddNode(layers,statnb*10000000+vnb*1000000+pnb*100000);
+	    planebox->AddNode(layers,statnb*10000000+vnb*1000000+pnb*100000);
             }	
           //end of view loop
-	    vac->AddNode(planes,statnb*10000000+vnb*1000000);
+	  vac->AddNode(planes,statnb*10000000+vnb*1000000);
           }
        //end of station1/2
        }       
