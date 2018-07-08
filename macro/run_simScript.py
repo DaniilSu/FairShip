@@ -37,7 +37,7 @@ inputFile    = "/eos/experiment/ship/data/Charm/Cascade-parp16-MSTP82-1-MSEL4-97
 defaultInputFile = True
 outputDir    = "."
 sameSeed     = False # can be set to an integer for the muonBackground simulation with specific seed for each muon 
-theSeed      = int(10000 * time.time() % 10000000)
+theSeed      = 0 # see TRrandom::SetSeed documentation
 
 globalDesigns = {'2016':{'dy':10.,'dv':5,'ds':7,'nud':1,'caloDesign':0,'strawDesign':4},\
                  '2018':{'dy':10.,'dv':6,'ds':9,'nud':3,'caloDesign':3,'strawDesign':10}}
@@ -344,6 +344,7 @@ if simEngine == "muonDIS":
  DISgen.Init(inputFile,firstEvent) 
  primGen.AddGenerator(DISgen)
  nEvents = min(nEvents,DISgen.GetNevents())
+ inactivateMuonProcesses = True # avoid unwanted hadronic events of "incoming" muon flying backward
  print 'Generate ',nEvents,' with DIS input', ' first event',firstEvent
 # -----neutrino interactions from nuage------------------------
 if simEngine == "Nuage":
@@ -424,6 +425,7 @@ if simEngine == "MuonBack":
   primGen.SetTarget(ship_geo.target.z0+50*u.m,0.)
  #
  MuonBackgen = ROOT.MuonBackGenerator()
+ # MuonBackgen.FollowAllParticles() # will follow all particles after hadron absorber, not only muons
  MuonBackgen.Init(inputFile,firstEvent,phiRandom)
  MuonBackgen.SetSmearBeam(5 * u.cm) # radius of ring, thickness 8mm
  if sameSeed: MuonBackgen.SetSameSeed(sameSeed)
@@ -435,7 +437,7 @@ if simEngine == "MuonBack":
     fastMuon = True
     modules['Veto'].SetFollowMuon()
  if fastMuon :    modules['Veto'].SetFastMuon()
- #   missing for the above use case, without making muon shield sensitve
+
  # optional, boost gamma2muon conversion
  # ROOT.kShipMuonsCrossSectionFactor = 100. 
 #
@@ -491,7 +493,8 @@ import geomGeant4
 # Define extra VMC B fields not already set by the geometry definitions, e.g. a global field,
 # any field maps, or defining if any volumes feel only the local or local+global field.
 # For now, just keep the fields already defined by the C++ code, i.e comment out the fieldMaker
-if hasattr(ship_geo.Bfield,"fieldMap"):
+if charm == 0:   # charm and muflux testbeam not yet updated for using the new bfield interface
+ if hasattr(ship_geo.Bfield,"fieldMap"):
   fieldMaker = geomGeant4.addVMCFields(ship_geo, '', True)
 
 # Print VMC fields and associated geometry objects
@@ -509,6 +512,7 @@ if inactivateMuonProcesses :
  mygMC.ProcessGeantCommand("/process/inactivate muPairProd")
  mygMC.ProcessGeantCommand("/process/inactivate muBrems")
  mygMC.ProcessGeantCommand("/process/inactivate muIoni")
+ mygMC.ProcessGeantCommand("/process/inactivate muonNuclear")
  mygMC.ProcessGeantCommand("/particle/select mu+")
  mygMC.ProcessGeantCommand("/particle/process/dump")
  gProcessTable = ROOT.G4ProcessTable.GetProcessTable()
@@ -559,7 +563,13 @@ print "Real time ",rtime, " s, CPU time ",ctime,"s"
 # remove empty events
 if simEngine == "MuonBack":
  tmpFile = outFile+"tmp"
- fin   = ROOT.gROOT.GetListOfFiles()[0]
+ xxx = outFile.split('/')
+ check = xxx[len(xxx)-1]
+ fin = False
+ for ff in ROOT.gROOT.GetListOfFiles():
+    nm = ff.GetName().split('/')
+    if nm[len(nm)-1] == check: fin = ff
+ if not fin: fin   = ROOT.TFile.Open(outFile)
  t     = fin.cbmsim
  fout  = ROOT.TFile(tmpFile,'recreate')
  sTree = t.CloneTree(0)
