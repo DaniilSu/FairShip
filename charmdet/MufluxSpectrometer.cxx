@@ -114,6 +114,11 @@ Int_t MufluxSpectrometer::InitMedium(const char* name)
    return geoBuild->createMedium(ShipMedium);
 }
 
+void MufluxSpectrometer::ChooseDetector(Bool_t muflux)
+{
+ fMuonFlux = muflux;
+}
+
 void MufluxSpectrometer::SetBoxParam(Double_t SX, Double_t SY, Double_t SZ, Double_t zBox)
 {
   SBoxX = SX;
@@ -295,6 +300,7 @@ void MufluxSpectrometer::ConstructGeometry()
   Double_t z[4] = {0.,0.,0.,0.}; 
     
  
+  if (fMuonFlux){
     //***************************************************************************************************************
     //*****************************************   OPERA DRIFT TUBES BY ERIC *****************************************
     //*****************************************   Dimensions from https://www-opera.desy.de/tracker.html*************     
@@ -335,13 +341,16 @@ void MufluxSpectrometer::ConstructGeometry()
     TGeoVolume *volDriftTube2 = new TGeoVolume("volDriftTube2",DriftTube2,air);
     volDriftTube2->SetLineColor(kBlue-5);
         
-    //z[0] = 5.8*cm + 2.*DimZ + fdiststereo; //5.8 for first scintillator wall (53.8-3*16)
-    z[0] = (2.*DimZ + fdiststereo+ fDeltaz_view)/2; //37 mm between center of scint and outer tube layer center; 5cm from absorber to scint center
-    z[1] = z[0] + fdistT1T2 + 2.*DimZ + fdiststereo;   
-    //z[2] = 2*z[0]+ fdistT1T2+4.5*m  + DimZ ; //z[3] distance  till end of T3    
-    z[2] = z[1]+ TransversalSize  + 3*DimZ/2+fdiststereo+5.*cm ; //z[3] distance  till end of T3 + 5cm
-    //z[3] = z[2]+ fdistT3T4+ DimZ + 5.8*cm;     
-    z[3] = z[2]+ fdistT3T4+ DimZ + 12.6*cm; 
+    //z[0] = (2.*DimZ + fdiststereo+ fDeltaz_view)/2; //37 mm between center of scint and outer tube layer center; 5cm from absorber to scint center
+    //z[1] = z[0] + fdistT1T2 + 2.*DimZ + fdiststereo;   
+    //z[2] = z[1]+ TransversalSize  + 3*DimZ/2+fdiststereo+5.*cm ; //z[3] distance  till end of T3 + 5cm   
+    //z[3] = z[2]+ fdistT3T4+ DimZ + 12.6*cm; 
+    
+    z[0] = 38.875*cm;
+    z[1] = 107.625*cm;
+    z[2] = 586.25*cm;
+    z[3] = 747.25*cm;
+    
     	    
     for (Int_t statnb=1; statnb<3; statnb++) {
       TString nmview_top_12="x";
@@ -521,7 +530,13 @@ t5.SetTranslation(-(ftr12ydim/2+eps-1.*cm)*cos(angle),(ftr12ydim/2+eps+plate_thi
       //end of view loop		
       }	
     } //end of statnb loop             
-     
+ }   
+    else{ //station positions for charm measurement
+  z[0] = 38.875*cm;
+  z[1] = 107.625*cm; //not used
+  z[2] = 581.500*cm;
+  z[3] = z[2] + fdistT3T4 + 2* DimZ/2;
+    }
     //field measurement done in this box, called vacuumbox for historical reasons
     TGeoBBox *VacuumBox = new TGeoBBox("VacuumBox", 156.0*cm/2, 82.6*cm/2., (360 * cm)/2.);
     TGeoVolume *volVacuum = new TGeoVolume("VolVacuum", VacuumBox, air);
@@ -539,7 +554,8 @@ t5.SetTranslation(-(ftr12ydim/2+eps-1.*cm)*cos(angle),(ftr12ydim/2+eps+plate_thi
     TGeoTranslation gtrans;
     ry90.SetAngles(90,90,90); 
     //From latest (2017) field measurements: beam coordinates x=-1.4mm, y=-178.6mm, hence need to move Goliath up
-    gtrans.SetTranslation(1.4*mm,goliathcentre_to_beam*mm,z[1] + (2.*DimZ + fdiststereo)/2+  TransversalSize/2 - fOuter_Tube_diameter/2 + 7.9*cm);
+    //gtrans.SetTranslation(1.4*mm,goliathcentre_to_beam*mm,z[1] + (2.*DimZ + fdiststereo)/2+  TransversalSize/2 - fOuter_Tube_diameter/2 + 7.9*cm);
+    gtrans.SetTranslation(1.4*mm,goliathcentre_to_beam*mm,350.75);
     TGeoCombiTrans cg(gtrans,ry90);
     TGeoHMatrix *mcg = new TGeoHMatrix(cg);
 
@@ -817,7 +833,8 @@ t5.SetTranslation(-(ftr12ydim/2+eps-1.*cm)*cos(angle),(ftr12ydim/2+eps+plate_thi
 	  //top->AddNode(volDriftTube4,4,new TGeoTranslation(0,0,4.5*m +286*cm + 2.5 * DimZ + 3.*cm)); //with SA and SB
 	  //top->AddNode(volDriftTube4,4,new TGeoTranslation(0,0,z[3]-(DimZ+5.8)));
 	  //move drifttubes up so they cover the Goliath aperture, not centered on the beam
-	  top->AddNode(volDriftTube4,4,new TGeoTranslation(0,goliathcentre_to_beam*mm,z[3]-(DimZ+11.6)));
+	  //top->AddNode(volDriftTube4,4,new TGeoTranslation(0,goliathcentre_to_beam*mm,z[3]-(DimZ+11.6)));
+	  top->AddNode(volDriftTube4,4,new TGeoTranslation(0,goliathcentre_to_beam*mm,z[3]));
           nmview_34 = "Station_4_x";
 	  nmview_top_34="Station_4_top_x";
 	  nmview_bot_34="Station_4_bot_x";		  	  	  

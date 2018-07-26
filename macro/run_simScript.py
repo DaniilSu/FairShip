@@ -7,9 +7,13 @@ from ShipGeoConfig import ConfigRegistry
 
 debug = 0  # 1 print weights and field
            # 2 make overlap check
+dryrun = False # True: just setup Pythia and exit
+
+CharmdetSetup = 0 # 1 charm cross section setup, 0 muon flux setup
 # Default HNL parameters
 theMass = 1.0*u.GeV
 theCouplings = [0.447e-9, 7.15e-9, 1.88e-9] # ctau=53.3km  TP default for HNL
+theProductionCouplings = theDecayCouplings = None
 
 # Default dark photon parameters
 theDPmass = 0.2*u.GeV
@@ -19,7 +23,7 @@ mcEngine     = "TGeant4"
 simEngine    = "Pythia8"  # "Genie" # Ntuple
 nEvents      = 100
 firstEvent   = 0
-inclusive    = "c"    # True = all processes if "c" only ccbar -> HNL, if "b" only bbar -> HNL, and for darkphotons: if meson = production through meson decays, pbrem = proton bremstrahlung, qcd = ffbar -> DP.
+inclusive    = "c"    # True = all processes if "c" only ccbar -> HNL, if "b" only bbar -> HNL, if "bc" only Bc+/Bc- -> HNL, and for darkphotons: if meson = production through meson decays, pbrem = proton bremstrahlung, qcd = ffbar -> DP.
 deepCopy     = False  # False = copy only stable particles to stack, except for HNL events
 MCTracksWithHitsOnly   = False  # copy particles which produced a hit and their history
 MCTracksWithEnergyCutOnly = True # copy particles above a certain kin energy cut
@@ -67,11 +71,12 @@ try:
                                    "PG","pID=","Pythia6","Pythia8","Genie","MuDIS","Ntuple","Nuage","MuonBack","FollowMuon","FastMuon",\
                                    "Cosmics=","nEvents=", "display", "seed=", "firstEvent=", "phiRandom", "mass=", "couplings=", "coupling=", "epsilon=",\
                                    "output=","tankDesign=","muShieldDesign=","NuRadio","test",\
-                                   "DarkPhoton","RpvSusy","SusyBench=","sameSeed=","charm=","nuTauTargetDesign=","caloDesign=","strawDesign=","Estart=","Eend="])
+                                   "DarkPhoton","RpvSusy","SusyBench=","sameSeed=","charm=","CharmdetSetup=","nuTauTargetDesign=","caloDesign=","strawDesign=","Estart=","Eend=",\
+                                   "production-couplings=","decay-couplings=","dry-run"])
 
 except getopt.GetoptError:
         # print help information and exit:
-        print ' enter --Pythia8 to generate events with Pythia8 (-A b: signal from b, -A c: signal from c (default)  or -A inclusive)'
+        print ' enter --Pythia8 to generate events with Pythia8 (-A b: signal from b, -A c: signal from c (default), -A bc: signal from Bc, or -A inclusive)'
         print ' or    --Genie for reading and processing neutrino interactions '
         print ' or    --Pythia6 for muon nucleon scattering'  
         print ' or    --PG for particle gun'  
@@ -85,6 +90,8 @@ except getopt.GetoptError:
         print '       --SusyBench to specify which of the preset benchmarks to generate (default 2)'
         print '       --mass or -m to set HNL or New Particle mass'
         print '       --couplings \'U2e,U2mu,U2tau\' or -c \'U2e,U2mu,U2tau\' to set list of HNL couplings'
+        print '       --production-couplings \'U2e,U2mu,U2tau\' to set the couplings for HNL production only'
+        print '       --decay-couplings \'U2e,U2mu,U2tau\' to set the couplings for HNL decay only'
         print '       --epsilon value or -e value to set mixing parameter epsilon' 
         print '                   Note that for RPVSUSY the third entry of the couplings is the stop mass'
         sys.exit(2)
@@ -111,7 +118,7 @@ for o, a in opts:
             if a.lower() == 'charmonly':
                charmonly = True
                HNL = False 
-            if a not in ['b','c','meson','pbrem','qcd']: inclusive = True
+            if a not in ['b','c','bc','meson','pbrem','qcd']: inclusive = True
         if o in ("--Genie",):
             simEngine = "Genie"
         if o in ("--NuRadio",):
@@ -164,6 +171,8 @@ for o, a in opts:
             strawDesign = int(a)
         if o in ("--charm",):
             charm = int(a)
+        if o in ("--CharmdetSetup",):
+            CharmdetSetup = int(a)
         if o in ("-F",):
             deepCopy = True
         if o in ("--RpvSusy",):
@@ -179,11 +188,17 @@ for o, a in opts:
            else: theMass = float(a)
         if o in ("-c", "--couplings", "--coupling",):
            theCouplings = [float(c) for c in a.split(",")]
+        if o in ("-cp", "--production-couplings"):
+            theProductionCouplings = [float(c) for c in a.split(",")]
+        if o in ("-cd", "--decay-couplings"):
+            theDecayCouplings = [float(c) for c in a.split(",")]
         if o in ("-e", "--epsilon",):
            theDPepsilon = float(a)
         if o in ("-t", "--test"):
             inputFile = "../FairShip/files/Cascade-parp16-MSTP82-1-MSEL4-76Mpot_1_5000.root"
             nEvents = 50
+        if o in ("--dry-run",):
+            dryrun = True
 
 #sanity check
 if (HNL and RPVSUSY) or (HNL and DarkPhoton) or (DarkPhoton and RPVSUSY): 
@@ -212,8 +227,10 @@ shipRoot_conf.configure(0)     # load basic libraries, prepare atexit for python
 #   nuTauTargetDesign = 0 # 0 = TP, 1 = NEW with magnet, 2 = NEW without magnet, 3 = 2018 design
 if charm == 0: ship_geo = ConfigRegistry.loadpy("$FAIRSHIP/geometry/geometry_config.py", Yheight = dy, tankDesign = dv, \
                                                 muShieldDesign = ds, nuTauTargetDesign=nud, CaloDesign=caloDesign, strawDesign=strawDesign, muShieldGeo=geofile)
-else: ship_geo = ConfigRegistry.loadpy("$FAIRSHIP/geometry/charm-geometry_config.py")
-
+else: 
+ ship_geo = ConfigRegistry.loadpy("$FAIRSHIP/geometry/charm-geometry_config.py", Setup = CharmdetSetup)
+ if CharmdetSetup == 0: print "Setup for muon flux measurement has been set"
+ else: print "Setup for charm cross section measurement has been set"
 # switch off magnetic field to measure muon flux
 #ship_geo.muShield.Field = 0.
 #ship_geo.EmuMagnet.B = 0.
@@ -266,15 +283,22 @@ if simEngine == "Pythia8":
   P8gen = ROOT.HNLPythia8Generator()
   import pythia8_conf
   if HNL:
-   print 'Generating HNL events of mass %.3f GeV\n'%theMass
-   print 'and with couplings=',theCouplings
-   pythia8_conf.configure(P8gen,theMass,theCouplings,inclusive,deepCopy)
+   print 'Generating HNL events of mass %.3f GeV'%theMass
+   if theProductionCouplings is None and theDecayCouplings is None:
+    print 'and with couplings=',theCouplings
+    theProductionCouplings = theDecayCouplings = theCouplings
+   elif theProductionCouplings is not None and theDecayCouplings is not None:
+    print 'and with couplings',theProductionCouplings,'at production'
+    print 'and',theDecayCouplings,'at decay'
+   else:
+    raise ValueError('Either both production and decay couplings must be specified, or neither.')
+   pythia8_conf.configure(P8gen,theMass,theProductionCouplings,theDecayCouplings,inclusive,deepCopy)
   if RPVSUSY:
-   print 'Generating RPVSUSY events of mass %.3f GeV\n'%theMass
-   print 'and with couplings=[%.3f,%.3f]\n'%(theCouplings[0],theCouplings[1])
-   print 'and with stop mass=\%.3f GeV\n',theCouplings[2]
+   print 'Generating RPVSUSY events of mass %.3f GeV'%theMass
+   print 'and with couplings=[%.3f,%.3f]'%(theCouplings[0],theCouplings[1])
+   print 'and with stop mass=%.3f GeV\n'%theCouplings[2]
    pythia8_conf.configurerpvsusy(P8gen,theMass,[theCouplings[0],theCouplings[1]],
-                                theCouplings[2],RPVSUSYbench,'c',deepCopy)
+                                theCouplings[2],RPVSUSYbench,inclusive,deepCopy)
   P8gen.SetParameters("ProcessLevel:all = off")
   if inputFile: 
    ut.checkFileExists(inputFile)
@@ -294,9 +318,14 @@ if simEngine == "Pythia8":
   P8gen.SetLmin((ship_geo.Chamber1.z - ship_geo.chambers.Tub1length) - ship_geo.target.z0 )
   P8gen.SetLmax(ship_geo.TrackStation1.z - ship_geo.target.z0 )
  if charmonly:
+  primGen.SetTarget(0., 0.) #vertex is setted in pythia8Generator
   ut.checkFileExists(inputFile)
-  primGen.SetBeam(0.,0., ship_geo.Box.TX-2., ship_geo.Box.TY-2.) #Uniform distribution in x/y on the target (1 cm of margin at both sides)    
-  primGen.SmearVertexXY(True)
+  if ship_geo.Box.gausbeam:
+   primGen.SetBeam(0.,0., 0.5, 0.5) #more central beam, for hits in downstream detectors    
+   primGen.SmearGausVertexXY(True) #sigma = x
+  else:
+   primGen.SetBeam(0.,0., ship_geo.Box.TX-1., ship_geo.Box.TY-1.) #Uniform distribution in x/y on the target (0.5 cm of margin at both sides)
+   primGen.SmearVertexXY(True)
   P8gen = ROOT.Pythia8Generator()
   P8gen.UseExternalFile(inputFile, firstEvent)
   if ship_geo.MufluxSpectrometer.muflux == False :
@@ -461,6 +490,8 @@ if eventDisplay: run.SetStoreTraj(ROOT.kTRUE)
 else:            run.SetStoreTraj(ROOT.kFALSE)
 # -----Initialize simulation run------------------------------------
 run.Init()
+if dryrun: # Early stop after setting up Pythia 8
+ sys.exit(0)
 gMC = ROOT.TVirtualMC.GetMC()
 fStack = gMC.GetStack()
 if MCTracksWithHitsOnly:

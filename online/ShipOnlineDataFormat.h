@@ -58,6 +58,7 @@ struct ChannelId {
          scintillatorA = channel == 1;
          station = (channel < 80) ? 2 : 4;
          channel_offset = (channel < 80) ? 112 : 1;
+         channel_offset += (channel > 32 && channel < 48) ? +16 : (channel > 48 && channel < 64) ? -16: 0;
          break;
       case 2:
          trigger = channel == 126;
@@ -115,17 +116,10 @@ struct ChannelId {
       return station * 10000000 + view * 1000000 + plane * 100000 + layer * 10000 + 2000 + straw;
    };
 };
-struct Flags {
-   uint16_t completely_different_settings : 1;
-   uint16_t width_resolution : 3;
-   uint16_t time_resolution : 2;
-   uint16_t measurement_type : 2;
-   uint16_t padding : 8;
-};
 const uint16_t delay(2000 / 0.098); // TODO update value
 } // namespace DriftTubes
 
-enum Direction { horizontal, vertical };
+enum Direction { horizontal = 0, vertical = 1 };
 namespace RPC {
 struct RawHit {
    uint16_t ncrate : 8;
