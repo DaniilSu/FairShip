@@ -236,6 +236,8 @@ def configure(run,ship_geo):
 
    NuTauTarget = ROOT.Target("NuTauTarget",ship_geo.NuTauTarget.Ydist,ROOT.kTRUE)
    NuTauTarget.MakeNuTargetPassive(ship_geo.NuTauTarget.nuTargetPassive)
+   if hasattr(ship_geo.NuTauTarget,"SingleEmFilm"): #for backward compatibility
+    NuTauTarget.MergeTopBot(ship_geo.NuTauTarget.SingleEmFilm)
    NuTauTarget.SetDetectorDesign(ship_geo.NuTauTarget.Design)
    if ship_geo.nuTauTargetDesign!=3:
     NuTauTarget.SetCenterZ(ship_geo.NuTauTarget.zC)
