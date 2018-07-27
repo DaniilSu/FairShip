@@ -164,7 +164,7 @@ with ConfigRegistry.register_config("basic") as c:
     c.strawtubes.StrawsPerLayer     = int(c.Yheight/c.strawtubes.StrawPitch)
     c.strawtubes.ViewAngle          = 11
     c.strawtubes.WireThickness      = 0.003*u.cm
-    c.strawtubes.DeltazView         = 12.*u.cm
+    c.strawtubes.DeltazView         = 10.*u.cm
     c.strawtubes.VacBox_x           = 300.*u.cm
     c.strawtubes.VacBox_y           = 600.*u.cm * c.Yheight / (10.*u.m)
            
