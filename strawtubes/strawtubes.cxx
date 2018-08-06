@@ -824,12 +824,12 @@ void strawtubes::StrawEndPoints(Int_t fDetectorID, TVector3 &vbot, TVector3 &vto
     if (statnb==5){prefix="Veto";}
     else{prefix+=statnb;}
     prefix+=view;
-    TString planes = prefix+"_planes_"+statnb+vnb+"000000";
+    TString planes = prefix;planes+="_planes_";planes+=statnb;planes+=vnb;planes+="000000";
     prefix+="_plane_";prefix+=pnb;prefix+="_";
     TString plane = prefix;plane+=statnb;plane+=vnb;plane+=+pnb;plane+="00000";
     TString layer = prefix+"layer_";layer+=lnb;layer+="_";layer+=statnb;layer+=vnb;layer+=pnb;layer+=lnb;layer+="0000";
     TString wire = "wire_";
-    TString layers = prefix+"layers_"+statnb+vnb+pnb+"00000";
+    TString layers = prefix;planes+="layers_";planes+=statnb;planes+=vnb;planes+=pnb;planes+="00000";
     if (statnb==5){wire+="veto_";}
     wire+=(fDetectorID+1000);
     if (statnb<3){wire = "wire_12_";wire+=(fDetectorID+1000);}
