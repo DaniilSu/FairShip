@@ -121,15 +121,15 @@ with ConfigRegistry.register_config("basic") as c:
      c.zFocusY = -5*u.m # for the moment, identical to X
      c.xMax    = +2.5*u.m # max horizontal width at T4
      # 
-     zset = z4 + 24.75*u.cm
-     c.TrackStation4 = AttrDict(z=zset)
-     zset=z4-200.*u.cm
+     z4_sym = z4 + 24.75*u.cm
+     c.TrackStation4 = AttrDict(z=z4_sym)
+     zset=z4_sym-200.*u.cm
      c.TrackStation3 = AttrDict(z=zset)
-     zset=z4-640.*u.cm-magnetIncrease
+     zset=z4_sym-640.*u.cm-magnetIncrease
      c.TrackStation2 = AttrDict(z=zset)
-     zset=z4-840.*u.cm-magnetIncrease
+     zset=z4_sym-840.*u.cm-magnetIncrease
      c.TrackStation1 = AttrDict(z=zset)
-     zset=z4-4406.*u.cm-magnetIncrease-extraVesselLength
+     zset=z4_sym-4406.*u.cm-magnetIncrease-extraVesselLength
      c.vetoStation   = AttrDict(z=zset)
 
     c.z = c.TrackStation2.z + 0.5 * (c.TrackStation3.z - c.TrackStation2.z)
