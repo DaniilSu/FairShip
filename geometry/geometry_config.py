@@ -83,7 +83,7 @@ with ConfigRegistry.register_config("basic") as c:
      c.chambers.Tub3length = 0.8*u.m
      c.chambers.Tub4length = 2.*u.m+magnetIncrease/2.
      c.chambers.Tub5length = 0.8*u.m
-     c.chambers.Tub6length = 0.1*u.m+windowBulge/2.
+     c.chambers.Tub6length = 0.1*u.m+windowBulge/2.-24.75*u.cm
      c.chambers.Rmin = 245.*u.cm
      c.chambers.Rmax = 250.*u.cm
      # positions and lenghts of vacuum tube segments
@@ -91,13 +91,14 @@ with ConfigRegistry.register_config("basic") as c:
      c.Chamber1 = AttrDict(z=zset)
      zset=z4-2628.*u.cm-magnetIncrease-extraVesselLength/2.
      c.Chamber2 = AttrDict(z=zset)
-     zset=z4-740.*u.cm-magnetIncrease
+     z4_sym = z4 + 24.75*u.cm
+     zset=z4_sym-740.*u.cm-magnetIncrease
      c.Chamber3 = AttrDict(z=zset)  
-     zset=z4-420.*u.cm-magnetIncrease/2.  
+     zset=z4_sym-420.*u.cm-magnetIncrease/2.  
      c.Chamber4 = AttrDict(z=zset)
-     zset=z4-100.*u.cm
+     zset=z4_sym-100.*u.cm
      c.Chamber5 = AttrDict(z=zset)
-     zset=z4+30.*u.cm+windowBulge/2.
+     zset=z4_sym+30.*u.cm+windowBulge/2.
      c.Chamber6 = AttrDict(z=zset)
      c.Veto = AttrDict(z=0*u.cm)
      c.Veto.innerSupport = 3.*u.cm 
@@ -121,7 +122,6 @@ with ConfigRegistry.register_config("basic") as c:
      c.zFocusY = -5*u.m # for the moment, identical to X
      c.xMax    = +2.5*u.m # max horizontal width at T4
      # 
-     z4_sym = z4 + 24.75*u.cm
      c.TrackStation4 = AttrDict(z=z4_sym)
      zset=z4_sym-200.*u.cm
      c.TrackStation3 = AttrDict(z=zset)
