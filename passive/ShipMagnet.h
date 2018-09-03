@@ -19,7 +19,7 @@ class ShipMagnet : public FairModule
  protected:
   
   Int_t  fDesign;       // design, 1=circular 5m, 2 = ellipse 5x10, 3 = rectangular
-  Int_t  fSpecMagz;     // z position
+  Double_t  fSpecMagz;     // z position
   Double_t  fDy;          // y diameter of ellipse
   Double_t  fDx;          // x diameter of ellipse
   Double_t YokeWidth, YokeDepth, CoilThick;
