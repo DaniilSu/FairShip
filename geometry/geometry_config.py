@@ -129,7 +129,7 @@ with ConfigRegistry.register_config("basic") as c:
      c.TrackStation2 = AttrDict(z=zset)
      zset=z4_sym-840.*u.cm-magnetIncrease
      c.TrackStation1 = AttrDict(z=zset)
-     zset=z4_sym-4406.*u.cm-magnetIncrease-extraVesselLength
+     zset=z4-4406.*u.cm-magnetIncrease-extraVesselLength
      c.vetoStation   = AttrDict(z=zset)
 
     c.z = c.TrackStation2.z + 0.5 * (c.TrackStation3.z - c.TrackStation2.z)
