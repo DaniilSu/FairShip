@@ -83,7 +83,7 @@ with ConfigRegistry.register_config("basic") as c:
      c.chambers.Tub3length = 0.8*u.m
      c.chambers.Tub4length = 2.*u.m+magnetIncrease/2.
      c.chambers.Tub5length = 0.8*u.m
-     c.chambers.Tub6length = 0.1*u.m+windowBulge/2.-24.75*u.cm
+     c.chambers.Tub6length = 0.1*u.m+windowBulge/2.-24.65*u.cm
      c.chambers.Rmin = 245.*u.cm
      c.chambers.Rmax = 250.*u.cm
      # positions and lenghts of vacuum tube segments
@@ -91,7 +91,7 @@ with ConfigRegistry.register_config("basic") as c:
      c.Chamber1 = AttrDict(z=zset)
      zset=z4-2628.*u.cm-magnetIncrease-extraVesselLength/2.
      c.Chamber2 = AttrDict(z=zset)
-     z4_sym = z4 + 24.75*u.cm
+     z4_sym = z4 + 24.65*u.cm
      zset=z4_sym-740.*u.cm-magnetIncrease
      c.Chamber3 = AttrDict(z=zset)  
      zset=z4_sym-420.*u.cm-magnetIncrease/2.  
