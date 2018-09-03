@@ -1538,29 +1538,48 @@ void veto::ConstructGeometry()
       top->AddNode(tDet2, 1, new TGeoTranslation(0, 0,zStartDet2));
      }
 
-// only for fastMuon simulation, otherwise output becomes too big
-     if (fFastMuon && fFollowMuon){
+	 if (fFastMuon && fFollowMuon){
         const char* Vol  = "TGeoVolume";
         const char* Mag  = "Mag";
         const char* Rock = "rock";
         const char* Ain  = "AbsorberAdd";
         const char* Aout = "AbsorberAddCore";
+        const char* magyoke = "magyoke";
+        const char* MCoil1 = "MCoil1";
+                const char* MCoil2 = "MCoil2";
+                const char* MCoil3 = "MCoil3";
+                const char* MCoil4 = "MCoil4";
+        const char* CV = "CV";
         TObjArray* volumelist = gGeoManager->GetListOfVolumes();
         int lastvolume = volumelist->GetLast();
         int volumeiterator=0;
         while ( volumeiterator<=lastvolume ) {
          const char* volumename = volumelist->At(volumeiterator)->GetName();
          const char* classname  = volumelist->At(volumeiterator)->ClassName();
-         if (strstr(classname,Vol)){
-          if (strstr(volumename,Mag) || strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout)){
-            AddSensitiveVolume(gGeoManager->GetVolume(volumename));
-            cout << "veto added "<< volumename <<endl;
-          }
-         }
+         if (strstr(classname,Vol)) {
+            if (strstr(volumename,Mag) || strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout)) {
+              AddSensitiveVolume(gGeoManager->GetVolume(volumename));
+              if (strstr(volumename,"SHiPMagnet")) {
+                  cout << "SHiPMagnet condition" << endl;
+                                  AddSensitiveVolume(gGeoManager->GetVolume(magyoke));
+                                  AddSensitiveVolume(gGeoManager->GetVolume(MCoil1));
+                                  AddSensitiveVolume(gGeoManager->GetVolume(MCoil2));
+                                  AddSensitiveVolume(gGeoManager->GetVolume(MCoil3));
+                                  AddSensitiveVolume(gGeoManager->GetVolume(MCoil4));
+                                  AddSensitiveVolume(gGeoManager->GetVolume(CV));
+                                  cout << "veto added to " << magyoke << " subvolume" << endl;
+                                  cout << "veto added to " << MCoil1 << " subvolume" << endl;
+                                  cout << "veto added to " << MCoil2 << " subvolume" << endl;
+                                  cout << "veto added to " << MCoil3 << " subvolume" << endl;
+                                  cout << "veto added to " << MCoil4 << " subvolume" << endl;
+                                  cout << "veto added to " << CV << " subvolume" << endl;
+                          }
+              cout << "veto added "<< volumename <<endl;
+                        }
+                  }
          volumeiterator++;
         }
      }
-
 }
 
 vetoPoint* veto::AddHit(Int_t trackID, Int_t detID,
