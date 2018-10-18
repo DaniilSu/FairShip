@@ -549,6 +549,23 @@ if inactivateMuonProcesses :
  gProcessTable = ROOT.G4ProcessTable.GetProcessTable()
  procmu = gProcessTable.FindProcess(ROOT.G4String('muIoni'),ROOT.G4String('mu+'))
  procmu.SetVerboseLevel(2)
+
+# checking for overlaps
+if checking4overlaps:
+ fGeo = ROOT.gGeoManager
+ fGeo.SetNmeshPoints(10000)
+ fGeo.CheckOverlaps(0.1)  # 1 micron takes 5minutes
+ fGeo.PrintOverlaps()
+ # check subsystems in more detail
+ for x in fGeo.GetTopNode().GetNodes(): 
+   x.CheckOverlaps(0.0001)
+   fGeo.PrintOverlaps()
+ listOfOverlaps = ROOT.TObjArray()
+ listOfOverlaps = fGeo.GetListOfOverlaps()
+ if not listOfOverlaps.IsEmpty():
+   print "The simulation was terminated due to the overlaps"
+   sys.exit()
+ 
 # -----Start run----------------------------------------------------
 run.Run(nEvents)
 # -----Runtime database---------------------------------------------
@@ -565,16 +582,6 @@ run.CreateGeometryFile("%s/geofile_full.%s.root" % (outputDir, tag))
 import saveBasicParameters
 saveBasicParameters.execute("%s/geofile_full.%s.root" % (outputDir, tag),ship_geo)
 
-# checking for overlaps
-if checking4overlaps:
- fGeo = ROOT.gGeoManager
- fGeo.SetNmeshPoints(10000)
- fGeo.CheckOverlaps(0.1)  # 1 micron takes 5minutes
- fGeo.PrintOverlaps()
- # check subsystems in more detail
- for x in fGeo.GetTopNode().GetNodes(): 
-   x.CheckOverlaps(0.0001)
-   fGeo.PrintOverlaps()
 # -----Finish-------------------------------------------------------
 timer.Stop()
 rtime = timer.RealTime()
