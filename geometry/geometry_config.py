@@ -147,6 +147,7 @@ with ConfigRegistry.register_config("basic") as c:
      c.strawtubes.FrameMaterial      = "aluminium"
      c.strawtubes.FrameLateralWidth  = 1.*u.cm
      c.strawtubes.DeltazFrame        = 10.*u.cm
+     c.strawtubes.FrameExtraWidth    = 0.*u.m
     elif strawDesign==10:  # 10 - baseline for 2018 
      c.strawtubes.InnerStrawDiameter = 1.975*u.cm
      c.strawtubes.StrawPitch         = 3.60*u.cm  
@@ -157,6 +158,7 @@ with ConfigRegistry.register_config("basic") as c:
      c.strawtubes.FrameMaterial      = "steel"
      c.strawtubes.FrameLateralWidth  = 1.2*u.m
      c.strawtubes.DeltazFrame        = 2.5*u.cm
+     c.strawtubes.FrameExtraWidth    = 1.*u.m
 
     c.strawtubes.WallThickness      = 0.0039*u.cm
     c.strawtubes.OuterStrawDiameter = (c.strawtubes.InnerStrawDiameter + 2*c.strawtubes.WallThickness)

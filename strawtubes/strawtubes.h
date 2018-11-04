@@ -56,6 +56,7 @@ class strawtubes: public FairDetector
     void SetWireThickness(Double_t wirethickness);
     void SetDeltazFrame(Double_t deltazframe);
     void SetFrameLateralWidth(Double_t framelateralwidth);
+    void SetFrameExtraWidth(Double_t frameextrawidth);
     void SetFrameMaterial(TString framematerial);
     void SetDeltazView(Double_t deltazview);
     void SetStrawLength12(Double_t strawlength12);
@@ -135,6 +136,7 @@ class strawtubes: public FairDetector
     Double_t     fWire_thickness;         //!  Thickness of the wire
     Double_t     fDeltaz_frame;           //!  Thickness (z) of the meterial frame
     Double_t     fFrame_lateral_width;    //!  Width (x and y) of the material frame
+    Double_t     fFrame_extra_width;      //!  Extra width (x and y) of the material frames around T1
     TString      fFrame_material;         //!  Material of the view frame
     Double_t     fDeltaz_view;            //!  Distance (z) between views
     Double_t     fVacBox_x;               //!  x size of station vacuumbox
@@ -154,7 +156,7 @@ class strawtubes: public FairDetector
     strawtubes(const strawtubes&);
     strawtubes& operator=(const strawtubes&);
     Int_t InitMedium(const char* name);
-    ClassDef(strawtubes,5)
+    ClassDef(strawtubes,6)
 };
 
 #endif //STRAWTUBES_H

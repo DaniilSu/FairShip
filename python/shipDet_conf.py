@@ -295,20 +295,23 @@ def configure(run,ship_geo):
    ship_geo.strawtubes.YPlaneOffset = ship_geo.strawtubes.StrawPitch  / 4.
  if ship_geo.strawDesign > 1 :
   # for backward compatibility
-  if ship_geo.strawDesign == 10 and not hasattr(ship_geo.strawtubes, "DeltazFrame"):
+  if ship_geo.strawDesign == 10 and not hasattr(ship_geo.strawtubes, "DeltazFrame") and not hasattr(ship_geo.strawtubes, "FrameExtraWidth"):
    ship_geo.strawtubes.DeltazFrame = 2.5*u.cm
    ship_geo.strawtubes.FrameLateralWidth = 1.2*u.m
    ship_geo.strawtubes.FrameMaterial = "steel"
+   ship_geo.strawtubes.FrameExtraWidth = 0.*u.m
   elif not hasattr(ship_geo.strawtubes, "DeltazFrame"):
    ship_geo.strawtubes.DeltazFrame = 10.*u.cm
    ship_geo.strawtubes.FrameLateralWidth = 1.*u.cm
    ship_geo.strawtubes.FrameMaterial = "aluminium"
+   ship_geo.strawtubes.FrameExtraWidth = 0.*u.m
 
   Strawtubes = ROOT.strawtubes("Strawtubes", ROOT.kTRUE)    
   Strawtubes.SetZpositions(ship_geo.vetoStation.z, ship_geo.TrackStation1.z, ship_geo.TrackStation2.z, ship_geo.TrackStation3.z, ship_geo.TrackStation4.z)
   Strawtubes.SetDeltazFrame(ship_geo.strawtubes.DeltazFrame)
   Strawtubes.SetFrameLateralWidth(ship_geo.strawtubes.FrameLateralWidth)
   Strawtubes.SetFrameMaterial(ship_geo.strawtubes.FrameMaterial)
+  Strawtubes.SetFrameExtraWidth(ship_geo.strawtubes.FrameExtraWidth)
   Strawtubes.SetDeltazView(ship_geo.strawtubes.DeltazView)
   Strawtubes.SetInnerStrawDiameter(ship_geo.strawtubes.InnerStrawDiameter)
   Strawtubes.SetOuterStrawDiameter(ship_geo.strawtubes.OuterStrawDiameter)
