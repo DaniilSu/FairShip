@@ -540,8 +540,10 @@ void strawtubes::ConstructGeometry()
 
     Double_t x_prime = (fVacBox_x+0.6*(fFrame_lateral_width)+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0) + (ftr34ydim+fFrame_lateral_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0);
     Double_t y_prime = (fVacBox_x+0.6*(fFrame_lateral_width)+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0) + (ftr34ydim+fFrame_lateral_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0);
-	Double_t x_prime_12 = (fStraw_length_12+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0);
-    Double_t y_prime_12 = (fStraw_length_12+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0);
+    Double_t x_prime_12 = (fStraw_length_12+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+fFrame_extra_width/2.+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0);
+    Double_t y_prime_12 = (fStraw_length_12+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+fFrame_extra_width/2.+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0);
+
+    Double_t Extra_delta = fFrame_extra_width * (0.5 * TMath::Cos(fView_angle*TMath::Pi()/180.0) + TMath::Sin(fView_angle*TMath::Pi()/180.0));
 
     TGeoBBox *vacbox = new TGeoBBox("vacbox", x_prime+eps, y_prime+eps, 2.*fDeltaz_view);
     TGeoBBox *vacbox_12 = new TGeoBBox("vacbox_12", x_prime_12+eps, y_prime_12+eps, 2.*fDeltaz_view);
@@ -560,12 +562,16 @@ void strawtubes::ConstructGeometry()
 	   case 1:
 	      TStationz=fT1z;
               vac_12 = new TGeoVolume(nmstation, vacbox_12, med);
-	      top->AddNode(vac_12, statnb, new TGeoTranslation(0,fFrame_extra_width,TStationz));
+	      top->AddNode(vac_12, statnb, new TGeoTranslation(0,fFrame_extra_width/2.,TStationz));
+	      //vac_12->SetLineColor(kGreen);
+	      //vac_12->SetTransparency('0.5');
 	      break;
 	   case 2:
 	      TStationz=fT2z;
               vac_12 = new TGeoVolume(nmstation, vacbox_12, med);
-	      top->AddNode(vac_12, statnb, new TGeoTranslation(0,fFrame_extra_width/2.,TStationz));
+	      top->AddNode(vac_12, statnb, new TGeoTranslation(0,0,TStationz));
+	      //vac_12->SetLineColor(kGreen);
+              //vac_12->SetTransparency('0.5');
 	      break;
 	   case 3:
 	      TStationz=fT3z;
@@ -614,25 +620,30 @@ void strawtubes::ConstructGeometry()
 	  
 	    TGeoVolume *viewframe_12;
 	    	if ((statnb!=1)) {
-				if (fFrame_material.Contains("aluminium")) {
+			if (fFrame_material.Contains("aluminium")) {
                 	viewframe_12 = new TGeoVolume(nmview_12, detcomp1_12, Al);
-            	}
-            	else {
+            	        }
+            	        else {
                 	viewframe_12 = new TGeoVolume(nmview_12, detcomp1_12, FrameMatPtr);
-            	}
-			}
-			else {
-				if (fFrame_material.Contains("aluminium")) {
+            	        }
+		}
+		else {
+			if (fFrame_material.Contains("aluminium")) {
                 	viewframe_12 = new TGeoVolume(nmview_12, detcomplarge1_12, Al);
-            	}
-            	else {
+            	        }
+            	        else {
                 	viewframe_12 = new TGeoVolume(nmview_12, detcomplarge1_12, FrameMatPtr);
-				}
 			}
+		}
 	 
 
 	    //z-translate the viewframe from station z pos
-	    t5.SetTranslation(0, 0,(vnb-3./2.)*(fDeltaz_view));
+	    if (statnb!=1) {
+	      t5.SetTranslation(0,0,(vnb-3./2.)*(fDeltaz_view));
+	    }
+	    else {
+              t5.SetTranslation(0,-fFrame_extra_width/2.,(vnb-3./2.)*(fDeltaz_view));
+            } 
 	    //rotate the frame box by angle degrees around the z axis (0 if it isn't a stereo view)	
             r5.SetAngles(angle,0,0);
             TGeoCombiTrans c5(t5, r5);
@@ -651,7 +662,12 @@ void strawtubes::ConstructGeometry()
 	      //the planebox sits in the viewframe
 	      //hence z translate the plane wrt to the view
 	      TGeoTranslation t3;
-	      t3.SetTranslation(0, 0,(vnb-3./2.)*(fDeltaz_view)+(pnb-1./2.)*fDeltaz_plane12);	
+	      if (statnb!=1) {
+	        t3.SetTranslation(0, 0,(vnb-3./2.)*(fDeltaz_view)+(pnb-1./2.)*fDeltaz_plane12);	
+	      }
+	      else {
+		t3.SetTranslation(0, -fFrame_extra_width/2.,(vnb-3./2.)*(fDeltaz_view)+(pnb-1./2.)*fDeltaz_plane12);
+	      }
 	      TGeoCombiTrans d3(t3, r5); 
 	      TGeoHMatrix *j3 = new TGeoHMatrix(d3);	  
 	      vac_12->AddNode(planebox_12, statnb*10000000+vnb*1000000+pnb*100000,j3); 	     
@@ -663,16 +679,16 @@ void strawtubes::ConstructGeometry()
 	         //z translate the layerbox wrt the plane box (which is already rotated)
 		 TString nmlayer_12 = nmplane_12+"_layer_"; nmlayer_12 += lnb;
 		 TGeoBBox *layer_12 = new TGeoBBox("layer box_12", fStraw_length_12+eps/4, ftr12ydim+eps/4, layerwidth/2.+eps/4);
-		 TGeoVolume *layerbox_12 = new TGeoVolume(nmlayer_12, layer_12, med);		        
-	         planebox_12->AddNode(layerbox_12, statnb*10000000+vnb*1000000+pnb*100000+lnb*10000,new TGeoTranslation(0,0,(lnb-1./2.)*fDeltaz_layer12)); 	  
+		 TGeoVolume *layerbox_12 = new TGeoVolume(nmlayer_12, layer_12, med);
+	         planebox_12->AddNode(layerbox_12, statnb*10000000+vnb*1000000+pnb*100000+lnb*10000,new TGeoTranslation(0,0,(lnb-1./2.)*fDeltaz_layer12));
 	
                  //layer loop
 	         TGeoRotation r6s;	
 	         TGeoTranslation t6s;
                  for (Int_t snb=1; snb<fStraws_per_layer_tr12; snb++) {
                    //straw loop
-	           t6s.SetTranslation(0,ftr12ydim-fStraw_pitch*snb-fOffset_plane12*pnb+lnb*fOffset_layer12,0); 	
-                   r6s.SetAngles(90,90,0);
+	           t6s.SetTranslation(0,ftr12ydim-fStraw_pitch*snb-fOffset_plane12*pnb+lnb*fOffset_layer12,0);
+		   r6s.SetAngles(90,90,0);
 	           TGeoCombiTrans c6s(t6s, r6s);
                    TGeoHMatrix *h6s = new TGeoHMatrix(c6s);
 	           layerbox_12->AddNode(straw_12,statnb*10000000+vnb*1000000+pnb*100000+lnb*10000+1000+snb,h6s);

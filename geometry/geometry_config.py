@@ -158,7 +158,7 @@ with ConfigRegistry.register_config("basic") as c:
      c.strawtubes.FrameMaterial      = "steel"
      c.strawtubes.FrameLateralWidth  = 1.2*u.m
      c.strawtubes.DeltazFrame        = 2.5*u.cm
-     c.strawtubes.FrameExtraWidth    = 1.*u.m
+     c.strawtubes.FrameExtraWidth    = 3.*u.m
 
     c.strawtubes.WallThickness      = 0.0039*u.cm
     c.strawtubes.OuterStrawDiameter = (c.strawtubes.InnerStrawDiameter + 2*c.strawtubes.WallThickness)
