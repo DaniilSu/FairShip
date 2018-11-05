@@ -540,13 +540,16 @@ void strawtubes::ConstructGeometry()
 
     Double_t x_prime = (fVacBox_x+0.6*(fFrame_lateral_width)+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0) + (ftr34ydim+fFrame_lateral_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0);
     Double_t y_prime = (fVacBox_x+0.6*(fFrame_lateral_width)+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0) + (ftr34ydim+fFrame_lateral_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0);
-    Double_t x_prime_12 = (fStraw_length_12+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+fFrame_extra_width/2.+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0);
-    Double_t y_prime_12 = (fStraw_length_12+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+fFrame_extra_width/2.+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0);
+    Double_t x_prime_12 = (fStraw_length_12+fFrame_lateral_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0);
+    Double_t y_prime_12 = (fStraw_length_12+fFrame_lateral_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0);
+    Double_t x_primelarge_12 = (fStraw_length_12+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+fFrame_extra_width/2.+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0);
+    Double_t y_primelarge_12 = (fStraw_length_12+fFrame_lateral_width+fFrame_extra_width+2*eps)*TMath::Sin(fView_angle*TMath::Pi()/180.0) + (ftr12ydim+fFrame_lateral_width+fFrame_extra_width/2.+2*eps)*TMath::Cos(fView_angle*TMath::Pi()/180.0);
 
     Double_t Extra_delta = fFrame_extra_width * (0.5 * TMath::Cos(fView_angle*TMath::Pi()/180.0) + TMath::Sin(fView_angle*TMath::Pi()/180.0));
 
     TGeoBBox *vacbox = new TGeoBBox("vacbox", x_prime+eps, y_prime+eps, 2.*fDeltaz_view);
     TGeoBBox *vacbox_12 = new TGeoBBox("vacbox_12", x_prime_12+eps, y_prime_12+eps, 2.*fDeltaz_view);
+    TGeoBBox *vacboxlarge_12 = new TGeoBBox("vacboxlarge_12", x_primelarge_12+15.0+eps, y_primelarge_12+15.0+eps, 2.*fDeltaz_view);
 
     fFrame_material.ToLower();
 
@@ -561,7 +564,7 @@ void strawtubes::ConstructGeometry()
        switch (statnb) {
 	   case 1:
 	      TStationz=fT1z;
-              vac_12 = new TGeoVolume(nmstation, vacbox_12, med);
+              vac_12 = new TGeoVolume(nmstation, vacboxlarge_12, med);
 	      top->AddNode(vac_12, statnb, new TGeoTranslation(0,fFrame_extra_width/2.,TStationz));
 	      //vac_12->SetLineColor(kGreen);
 	      //vac_12->SetTransparency('0.5');
