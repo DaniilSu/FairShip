@@ -14,6 +14,9 @@
 #include <algorithm>
 #include <unordered_map>
 
+const Double_t cm = 10.; // pythia units are mm
+const Double_t c_light = 2.99792458e+10; // speed of light in cm/sec (c_light   = 2.99792458e+8 * m/s)
+
 // read events from Pythia8/Geant4 base simulation (only target + hadron absorber
 
 // -----   Default constructor   -------------------------------------------
@@ -189,7 +192,7 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
        vx = track->GetStartX()+dx;
        vy = track->GetStartY()+dy;
        vz = track->GetStartZ();
-       tof =  track->GetStartT()/1E9; // convert back from ns to sec;
+       tof =  (track->GetStartT() / (10*c_light))/1E9; // convert back from ns to sec;
        e = track->GetEnergy();
        Bool_t wanttracking = false; // only transport muons
        for (std::pair<int, int> element : muList){
@@ -207,7 +210,7 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
            vx = lpv[0];
            vy = lpv[1];
            vz = lpv[2];
-           tof =  v->GetTime()/1E9; // convert back from ns to sec
+           tof =  (v->GetTime() / (10*c_light))/1E9; // convert back from ns to sec
           }
           break;
         }
