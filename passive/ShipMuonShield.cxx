@@ -749,12 +749,14 @@ void ShipMuonShield::ConstructGeometry()
       tShield->AddNode(absorber, 1, new TGeoTranslation(0, 0, zEndOfAbsorb + absorber_half_length + absorber_offset));
 
       if (fDesign > 7) {
-         auto coat_trans = new TGeoTranslation("coat_trans", 0, 0, +10 * cm);
-         coat_trans->RegisterYourself();
-         auto coatBox = new TGeoBBox("coat", 10 * m - 1 * mm, 10 * m - 1 * mm, absorber_half_length + 10 * cm);
-         auto coatShape = new TGeoCompositeShape("CoatShape", "coat:coat_trans-absorber");
+         auto coatBox = new TGeoBBox("coat", 10 * m - 1 * mm, 10 * m - 1 * mm, absorber_half_length);
+         auto coatShape = new TGeoCompositeShape("CoatShape", "coat-absorber");
          auto coat = new TGeoVolume("CoatVol", coatShape, concrete);
-         tShield->AddNode(coat, 1, new TGeoTranslation(0, 0, zEndOfAbsorb + absorber_half_length + absorber_offset));
+         tShield->AddNode(coat, 1, new TGeoTranslation(0, 0, zEndOfAbsorb + absorber_half_length + absorber_offset ));
+         TGeoVolume *coatWall = gGeoManager->MakeBox("CoatWall",concrete,10 * m - 1 * mm, 10 * m - 1 * mm, 7 * cm - 1 * mm);
+         coatWall->SetLineColor(kRed);
+         tShield->AddNode(coatWall, 1, new TGeoTranslation(0, 0, zEndOfAbsorb + 2*absorber_half_length + absorber_offset+7 * cm));
+
       }
 
       for (Int_t nM = 2; nM <= (nMagnets - 1); nM++) {
@@ -824,9 +826,8 @@ void ShipMuonShield::ConstructGeometry()
       Double_t dX1 = dXIn[0];
       Double_t dY = dYIn[0];
 
-      TGeoShapeAssembly* asmbShield = dynamic_cast<TGeoShapeAssembly*>(tShield->GetShape());
-      Double_t totLength = asmbShield->GetDZ();
-      top->AddNode(tShield, 1, new TGeoTranslation(0, 0, totLength));
+      // Place in origin of SHiP coordinate system as subnodes placed correctly
+      top->AddNode(tShield, 1);
 
 // Concrete around first magnets. i.e. Tunnel
       Double_t dZ = dZ1 + dZ2;

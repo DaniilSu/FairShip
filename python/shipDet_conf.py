@@ -221,6 +221,7 @@ def configure(run,ship_geo):
     EmuMagnet.SetDesign(ship_geo.EmuMagnet.Design)
     EmuMagnet.SetGaps(ship_geo.EmuMagnet.GapUp, ship_geo.EmuMagnet.GapDown)
     EmuMagnet.SetMagneticField(ship_geo.EmuMagnet.B)
+    EmuMagnet.SetConstantField(ship_geo.EmuMagnet.WithConstField)
     EmuMagnet.SetMagnetSizes(ship_geo.EmuMagnet.X, ship_geo.EmuMagnet.Y, ship_geo.EmuMagnet.Z)
     if ship_geo.nuTauTargetDesign==0 or ship_geo.nuTauTargetDesign==1:
       EmuMagnet.SetCoilParameters(ship_geo.EmuMagnet.Radius, ship_geo.EmuMagnet.Height1, ship_geo.EmuMagnet.Height2, ship_geo.EmuMagnet.Distance)
@@ -236,6 +237,8 @@ def configure(run,ship_geo):
 
    NuTauTarget = ROOT.Target("NuTauTarget",ship_geo.NuTauTarget.Ydist,ROOT.kTRUE)
    NuTauTarget.MakeNuTargetPassive(ship_geo.NuTauTarget.nuTargetPassive)
+   if hasattr(ship_geo.NuTauTarget,"SingleEmFilm"): #for backward compatibility
+    NuTauTarget.MergeTopBot(ship_geo.NuTauTarget.SingleEmFilm)
    NuTauTarget.SetDetectorDesign(ship_geo.NuTauTarget.Design)
    if ship_geo.nuTauTargetDesign!=3:
     NuTauTarget.SetCenterZ(ship_geo.NuTauTarget.zC)

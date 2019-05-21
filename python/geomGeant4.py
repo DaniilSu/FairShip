@@ -131,7 +131,7 @@ def printWeightsandFields(onlyWithField = True,exclude=[]):
    print 'total magnet mass',nM/1000.,'t'
    return
 
-def addVMCFields(shipGeo, controlFile = '', verbose = False):
+def addVMCFields(shipGeo, controlFile = '', verbose = False, withVirtualMC = True):
     '''
     Define VMC B fields, e.g. global field, field maps, local or local+global fields
     '''
@@ -147,16 +147,24 @@ def addVMCFields(shipGeo, controlFile = '', verbose = False):
     # Set the main spectrometer field map as a global field
     if hasattr(shipGeo, 'Bfield'):
       fieldMaker.defineFieldMap('MainSpecMap', 'files/MainSpectrometerField.root',
-                                ROOT.TVector3(0.0, 0.0, shipGeo.Bfield.z))
-      fieldMaker.defineGlobalField('MainSpecMap')
-
+                                ROOT.TVector3(0.0, 0.0, shipGeo.Bfield.z))      
+      withConstField = False
+      if hasattr(shipGeo.EmuMagnet,'WithConstField'): withConstField = shipGeo.EmuMagnet.WithConstField
+      if not withConstField:
+       fieldMaker.defineFieldMap('NuMap','files/nuTauDetField.root', ROOT.TVector3(0.0,0.0,shipGeo.EmuMagnet.zC))       
+    # Combine the two fields to obtain the global field
+       fieldMaker.defineComposite('TotalField', 'MainSpecMap', 'NuMap')
+       fieldMaker.defineGlobalField('TotalField')
+      else:
+       fieldMaker.defineGlobalField('MainSpecMap')
+    if withVirtualMC:
     # Force the VMC to update/reset the fields defined by the fieldMaker object.
     # Get the ROOT/Geant4 geometry manager
-    geom = ROOT.TG4GeometryManager.Instance()
+     geom = ROOT.TG4GeometryManager.Instance()
     # Let the geometry know about the fieldMaker object
-    geom.SetUserPostDetConstruction(fieldMaker)
+     geom.SetUserPostDetConstruction(fieldMaker)
     # Update the fields via the overriden ShipFieldMaker::Contruct() function
-    geom.ConstructSDandField()
+     geom.ConstructSDandField()
 
     # Return the fieldMaker object, otherwise it will "go out of scope" and its
     # content will be deleted
