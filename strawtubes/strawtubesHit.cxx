@@ -70,7 +70,7 @@ strawtubesHit::strawtubesHit(strawtubesPoint* p, Double_t t0, bool misalign)
      {
         // to calculate the dist2Wire under sagging, negative return means outside the tube
         TVector3 pPos = TVector3(p->GetX(), p->GetY(), p->GetZ());
-	TVector3 d = strat - stop
+	TVector3 d = start - stop
 	TVector3 d_stop = pPos - stop
         //TVector3 wPos = ((start.x() - pPos.x()) * stop + (pPos.x() - stop.x()) * start) * (1./(start.x() - stop.x()));
         TVector3 wPos = stop + ((d.Dot(d_stop))/(d.Mag()*d.Mag())) * d
