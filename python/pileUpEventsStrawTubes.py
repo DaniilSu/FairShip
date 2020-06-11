@@ -83,10 +83,12 @@ branch_class = {"vetoPoint":"vetoPoint","ShipRpcPoint":"ShipRpcPoint","TargetPoi
 for x in branch_class:
   if not newTree.GetBranch(x):
     dummyContainers[x+"_array"] = ROOT.TClonesArray(branch_class[x])
-    dummyContainers[x] = sTree.Branch(x,dummyContainers[x+"_array"],32000,-1)
+    dummyContainers[x] = newTree.Branch(x,dummyContainers[x+"_array"],32000,-1)
     setattr(newTree,x,dummyContainers[x+"_array"])
     dummyContainers[x].Fill()
 #
+newTree.SetBranchStatus("strawtubesPoint*",0)
+newTree.SetBranchStatus("MCTrack*",0)
 timeStamp = 0.0025 # us
 rateSST = 2.2 # MHz
 r = ROOT.TUnuran()
@@ -96,22 +98,48 @@ fPileUp.SetParameter(1,timeStamp)
 r.Init(TUnuranDistrCont(fPileUp))
 global_time = 0 # us
 frame_time = global_variables.deltaT
+unitedStrawtubesBranch = ROOT.TClonesArray("strawtubesPoint")
+unitedMCTrackBranch = ROOT.TClonesArray("MCTrack")
+bufferOfHits = []
+bufferOfMCTracks = []
+trackIDshift = 0
 # main loop
 for global_variables.iEvent in range(0, options.nEvents):
   if global_variables.iEvent % 1000 == 0:
     print('event ', global_variables.iEvent)
   if global_time < frame_time:
     rc = sTree.GetEvent(global_variables.iEvent)
+    if len(bufferOfHits) > 0:
+      for hit,track in bufferOfHits,bufferOfMCTracks:
+        if hit.GetTime() < frame_time:
+          unitedStrawtubesBranch.AddLast(hit)
+          unitedMCTrackBranch.AddLast(track)
+          bufferOhHits.remove(hit)
+          bufferOfMCTracks.remove(track)
+          trackIDshift += 1
     for aMCPoint in sTree.strawtubesPoint:
       aMCPoint.SetTime(aMCPoint.GetTime() + global_time)
+      trid = aMCPoint.GetTrackID()
+      if aMCPoint.GetTime() >= frame_time:
+        aMCPoint.SetTrackID(len(bufferOfHits))
+        bufferOfHits.append(aMCPoint)
+        bufferOfMCTracks.append(sTree.MCTrack[trid])
+      else:
+        aMCPoint.SetTrackID(trackIDshift + aMCPoint.GetTrackID())
+        unitedStrawtubesBranch.AddLast(aMCPoint)
+        unitedMCTrackBranch.AddLast(sTree.MCTrack[trid])
+    trackIDshift = 0
   else:
     frame_time += global_variables.deltaT
     newTree.Fill()
+    newTree.strawtubesPoint = unitedStrawtubesBranch
+    newTree.MCTrack = unitedMCTrackBranch
+    unitedStrawtubesBranch.Clear()
+    unitedMCTrackBranch.Clear()
   global_time += r.Sample()
  # memory monitoring
  # mem_monitor()
 # end loop over events
-SHiP.finish()
 newTree.AutoSave()
 fn.Close()
 piledUpf.Close()
