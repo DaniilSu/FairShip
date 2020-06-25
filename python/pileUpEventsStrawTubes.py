@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import division
 from argparse import ArgumentParser
+from decorators import *
 
 import ROOT,os,sys
 import global_variables
@@ -94,45 +95,48 @@ fPileUp = ROOT.TF1("fPileUp","[0]*[1]*TMath::Exp(-[0]*x)",0,global_variables.del
 fPileUp.SetParameter(0,rateSST)
 fPileUp.SetParameter(1,timeStamp)
 global_time = 0 # us
-frame_time = global_variables.deltaT * 1000
+frame_time = global_variables.deltaT * 1000 # ns
 unitedStrawtubesArray = ROOT.TClonesArray("strawtubesPoint")
 unitedMCTrackArray = ROOT.TClonesArray("ShipMCTrack")
 unitedStrawtubesBranch = newTree.Branch("strawtubesPointUnited",unitedStrawtubesArray,32000,-1)
 unitedMCTrackBranch = newTree.Branch("MCTrackUnited",unitedMCTrackArray,32000,-1)
-#setattr(newTree,"strawtubesPointUnited",unitedStrawtubesArray)
-#unitedStrawtubesBranch.Fill()
-#setattr(newTree,"MCTrackUnited",unitedMCTrackArray)
-#unitedStrawtubesBranch = newTree.strawtubesPoint
-#unitedMCTrackBranch = newTree.MCTrack
 bufferOfHits = ROOT.TClonesArray("strawtubesPoint",0)
 bufferOfMCTracks = ROOT.TClonesArray("ShipMCTrack",0)
 trackIDshift = 0
 index = 0
 index_buffer = 0
+index_MCTrack_buffer = 0
 remove_buffer = []
+used_trids_buffer = []
+newTreeMainEventCounter = 0
+insideTheFrameEventCounter = 0
+unitedMCTrackIndex = 0
 # main loop
 for global_variables.iEvent in range(0, options.nEvents):
   if global_variables.iEvent % 1000 == 0:
     print('event ', global_variables.iEvent)
-  if global_time < frame_time:
-    rc = sTree.GetEvent(global_variables.iEvent)
+  if global_time >= frame_time:
     if bufferOfHits.GetSize() > 0:
       i = 0
-      for hit, track in zip(bufferOfHits,bufferOfMCtracks):
+      for hit in bufferOfHits:
         if hit.GetTime() < frame_time:
           if unitedStrawtubesArray.GetSize() == index:
             unitedStrawtubesArray.Expand(index+1000)
-            unitedMCTrackArray.Expand(index+1000)
           unitedStrawtubesArray[index] = hit
-          unitedMCTrackArray[index] = track
+          trid = hit.GetTrackID()
+          if trid >= 0:
+            hit.SetTrackID(unitedMCTrackIndex+1)
+            if unitedMCTrackArray.GetSize() <= unitedMCTrackIndex+1:
+              unitedMCTrackArray.Expand(unitedMCTrackIndex+1+1000)
+            unitedMCTrackArray.AddAt(bufferOfMCTracks[i],unitedMCTrackIndex+1)
+            unitedMCTrackIndex += 1
           remove_buffer.append(i)
-          trackIDshift += 1
           index += 1
         i += 1
       if len(remove_buffer) > 0:
-        print("size before removing",bufferOfHits.GetSize())
-        print(remove_buffer)
-        bufferOfHits.Print()
+        #print("size before removing",bufferOfHits.GetSize())
+        #print(remove_buffer)
+        #bufferOfHits.Print()
         for j in range(len(remove_buffer)):
           bufferOfHits.RemoveAt(remove_buffer[j])
           bufferOfMCTracks.RemoveAt(remove_buffer[j])
@@ -140,41 +144,58 @@ for global_variables.iEvent in range(0, options.nEvents):
         bufferOfMCTracks.Compress()
         bufferOfHits.Expand(bufferOfHits.GetSize()-len(remove_buffer))
         bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_buffer))
-        bufferOfHits.Print()
+        #bufferOfHits.Print()
         del remove_buffer[:]
-        print("size after removing",bufferOfHits.GetSize())
+        #print("size after removing",bufferOfHits.GetSize())
         index_buffer = bufferOfHits.GetSize()
-        print("index_buffer, buffer loop",index_buffer)
-    for aMCPoint in sTree.strawtubesPoint:
-      aMCPoint.SetTime(aMCPoint.GetTime() + global_time)
-      trid = aMCPoint.GetTrackID()
-      if aMCPoint.GetTime() >= frame_time:
-        aMCPoint.SetTrackID(bufferOfHits.GetSize())
-        bufferOfHits.Expand(bufferOfHits.GetSize()+1)
-        print(bufferOfHits.GetSize())
-        print("index_buffer, strawtubes point loop",index_buffer)
-        bufferOfHits[index_buffer] = aMCPoint
-        bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()+1)
-        bufferOfMCTracks[index_buffer] = sTree.MCTrack[trid]
-        index_buffer += 1
-      else:
-        aMCPoint.SetTrackID(trackIDshift + aMCPoint.GetTrackID())
-        if unitedStrawtubesArray.GetSize() == index:
-          unitedStrawtubesArray.Expand(index+1000)
-          unitedMCTrackArray.Expand(index+1000)
-        unitedStrawtubesArray[index] = aMCPoint
-        unitedMCTrackArray[index] = sTree.MCTrack[trid]
-        index += 1
-    trackIDshift = 0
-  else:
+        #print("index_buffer, buffer loop",index_buffer)
     frame_time += global_variables.deltaT * 1000
     unitedStrawtubesArray.Compress()
-    unitedMCTrackArray.Compress()
+    #unitedMCTrackArray.Compress()
     newTree.Fill()
+    newTreeMainEventCounter += 1
+    insideTheFrameEventCounter = 0
     #unitedStrawtubesBranch.Fill()
     #unitedMCTrackBranch.Fill()
     index = 0
     #unitedMCTrackBranch.Clear()
+  rc = sTree.GetEvent(global_variables.iEvent)
+  insideTheFrameEventCounter += 1
+  #sTree.strawtubesPoint.Dump()
+  #sTree.MCTrack.Dump()
+  for aMCPoint in sTree.strawtubesPoint:
+    aMCPoint.SetTime(aMCPoint.GetTime() + global_time)
+    trid = aMCPoint.GetTrackID()
+    #print("PDGcode: ",aMCPoint.PdgCode())
+    #print("TrackID: ",trid)
+    if aMCPoint.GetTime() >= frame_time:
+      bufferOfHits.Expand(bufferOfHits.GetSize()+1)
+      bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()+1)
+      #print(bufferOfHits.GetSize())
+      #print("index_buffer, strawtubes point loop",index_buffer)
+      bufferOfHits[index_buffer] = aMCPoint
+      if trid >= 0:
+        bufferOfMCTracks[index_buffer] = sTree.MCTrack[trid]
+      else:
+        bufferOfMCTracks[index_buffer] = ShipMCTrack()
+      index_buffer += 1
+    else:
+      if unitedStrawtubesArray.GetSize() == index:
+        unitedStrawtubesArray.Expand(index+1000)
+      if trid >= 0: 
+        aMCPoint.SetTrackID(insideTheFrameEventCounter * 1000 + trid)
+        unitedStrawtubesArray[index] = aMCPoint
+        unitedMCTrackIndex = aMCPoint.GetTrackID()
+        if not unitedMCTrackIndex in used_trids_buffer: 
+          unitedMCTrackIndex = aMCPoint.GetTrackID()
+          if unitedMCTrackArray.GetSize() <= unitedMCTrackIndex:
+            unitedMCTrackArray.Expand(unitedMCTrackIndex+1000)
+          unitedMCTrackArray[unitedMCTrackIndex] = sTree.MCTrack[trid]
+          used_trids_buffer.append(unitedMCTrackIndex)
+      else:
+        unitedStrawtubesArray[index] = aMCPoint
+      index += 1
+  del used_trids_buffer[:]
   global_time += fPileUp.GetRandom() * 1000
  # memory monitoring
  # mem_monitor()
