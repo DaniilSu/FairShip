@@ -136,7 +136,6 @@ for global_variables.iEvent in range(0, options.nEvents):
       if len(remove_buffer) > 0:
         #print("size before removing",bufferOfHits.GetSize())
         #print(remove_buffer)
-        #bufferOfHits.Print()
         for j in range(len(remove_buffer)):
           bufferOfHits.RemoveAt(remove_buffer[j])
           bufferOfMCTracks.RemoveAt(remove_buffer[j])
@@ -144,21 +143,16 @@ for global_variables.iEvent in range(0, options.nEvents):
         bufferOfMCTracks.Compress()
         bufferOfHits.Expand(bufferOfHits.GetSize()-len(remove_buffer))
         bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_buffer))
-        #bufferOfHits.Print()
         del remove_buffer[:]
         #print("size after removing",bufferOfHits.GetSize())
         index_buffer = bufferOfHits.GetSize()
         #print("index_buffer, buffer loop",index_buffer)
     frame_time += global_variables.deltaT * 1000
     unitedStrawtubesArray.Compress()
-    #unitedMCTrackArray.Compress()
     newTree.Fill()
     newTreeMainEventCounter += 1
     insideTheFrameEventCounter = 0
-    #unitedStrawtubesBranch.Fill()
-    #unitedMCTrackBranch.Fill()
     index = 0
-    #unitedMCTrackBranch.Clear()
   rc = sTree.GetEvent(global_variables.iEvent)
   insideTheFrameEventCounter += 1
   #sTree.strawtubesPoint.Dump()
