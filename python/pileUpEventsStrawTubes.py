@@ -8,6 +8,7 @@ import global_variables
 import rootUtils as ut
 import shipunit as u
 import shipRoot_conf
+import copy
 
 shipRoot_conf.configure()
 
@@ -74,18 +75,11 @@ fn = ROOT.TFile.Open(options.inputFile,"read")
 sTree = fn.cbmsim
 options.nEvents   = min(sTree.GetEntries(),options.nEvents)
 piledUpf = ROOT.TFile(outFile,"recreate")
+sTree.SetBranchStatus("strawtubesPoint*",0)
+sTree.SetBranchStatus("MCTrack*",0)
 newTree = sTree.CloneTree(0)
-#  check that all containers are present, otherwise create dummy version
-dummyContainers={}
-branch_class = {"vetoPoint":"vetoPoint","ShipRpcPoint":"ShipRpcPoint","TargetPoint":"TargetPoint",\
-                  "strawtubesPoint":"strawtubesPoint","EcalPointLite":"ecalPoint",\
-                  "TimeDetPoint":"TimeDetPoint","muonPoint":"muonPoint","UpstreamTaggerPoint":"UpstreamTaggerPoint"}
-for x in branch_class:
-  if not newTree.GetBranch(x):
-    dummyContainers[x+"_array"] = ROOT.TClonesArray(branch_class[x])
-    dummyContainers[x] = newTree.Branch(x,dummyContainers[x+"_array"],32000,-1)
-    setattr(newTree,x,dummyContainers[x+"_array"])
-    dummyContainers[x].Fill()
+sTree.SetBranchStatus("strawtubesPoint*",1)
+sTree.SetBranchStatus("MCTrack*",1)
 #
 #newTree.SetBranchStatus("strawtubesPoint*",0)
 #newTree.SetBranchStatus("MCTrack*",0)
@@ -98,99 +92,157 @@ global_time = 0 # us
 frame_time = global_variables.deltaT * 1000 # ns
 unitedStrawtubesArray = ROOT.TClonesArray("strawtubesPoint")
 unitedMCTrackArray = ROOT.TClonesArray("ShipMCTrack")
-unitedStrawtubesBranch = newTree.Branch("strawtubesPointUnited",unitedStrawtubesArray,32000,-1)
-unitedMCTrackBranch = newTree.Branch("MCTrackUnited",unitedMCTrackArray,32000,-1)
-bufferOfHits = ROOT.TClonesArray("strawtubesPoint",0)
-bufferOfMCTracks = ROOT.TClonesArray("ShipMCTrack",0)
-trackIDshift = 0
+unitedStrawtubesBranch = newTree.Branch("strawtubesPoint",unitedStrawtubesArray,32000,-1)
+unitedMCTrackBranch = newTree.Branch("MCTrack",unitedMCTrackArray,32000,-1)
+bufferOfHits = ROOT.TClonesArray("strawtubesPoint",1)
+bufferOfMCTracks = ROOT.TClonesArray("ShipMCTrack",1)
 index = 0
 index_buffer = 0
-index_MCTrack_buffer = 0
+index_MC_buffer = 0
+index_MCTrack = 0
 remove_buffer = []
-used_trids_buffer = []
+remove_MC_buffer = []
+shift_TrackID_buffer = {}
+used_trids_buffer = {}
+used_trids_buffer_pile = {}
+used_trids_buffer_remove = {}
 newTreeMainEventCounter = 0
 insideTheFrameEventCounter = 0
-unitedMCTrackIndex = 0
 # main loop
 for global_variables.iEvent in range(0, options.nEvents):
   if global_variables.iEvent % 1000 == 0:
     print('event ', global_variables.iEvent)
   if global_time >= frame_time:
-    if bufferOfHits.GetSize() > 0:
+    if index_buffer > 0:
       i = 0
+      bufferOfHits.Dump()
+      bufferOfMCTracks.Dump()
+      print("size ",bufferOfHits.GetSize())
       for hit in bufferOfHits:
         if hit.GetTime() < frame_time:
+          print("I am inside !!!")
           if unitedStrawtubesArray.GetSize() == index:
             unitedStrawtubesArray.Expand(index+1000)
-          unitedStrawtubesArray[index] = hit
-          trid = hit.GetTrackID()
+          unitedStrawtubesArray[index] = ROOT.strawtubesPoint(hit)
+          trid = unitedStrawtubesArray[index].GetTrackID()
+          print("trid ", trid)
           if trid >= 0:
-            hit.SetTrackID(unitedMCTrackIndex+1)
-            if unitedMCTrackArray.GetSize() <= unitedMCTrackIndex+1:
-              unitedMCTrackArray.Expand(unitedMCTrackIndex+1+1000)
-            unitedMCTrackArray.AddAt(bufferOfMCTracks[i],unitedMCTrackIndex+1)
-            unitedMCTrackIndex += 1
+            if not trid in used_trids_buffer_remove:
+              if unitedMCTrackArray.GetSize() == index_MCTrack:
+                unitedMCTrackArray.Expand(index_MCTrack+1000)
+              unitedStrawtubesArray[index].SetTrackID(index_MCTrack)
+              unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(bufferOfMCTracks[trid])
+              index_MCTrack += 1
+              remove_MC_buffer.append(trid)
+              used_trids_buffer_remove[trid] = index_MCTrack
+            else:
+              unitedStrawtubesArray[index].SetTrackID(used_trids_buffer_remove[trid])
           remove_buffer.append(i)
           index += 1
         i += 1
+      used_trids_buffer_remove.clear()
+      print("remove_buffer",remove_buffer)
+      if len(remove_MC_buffer) > 0:
+        for i in range(len(remove_MC_buffer)):
+          for j in range(bufferOfHits.GetSize()):
+            trid = bufferOfHits[j].GetTrackID()
+            if not j in remove_buffer:
+              shift_TrackID_buffer[trid] = j
+
+        print("shift_TrackID_buffer ",shift_TrackID_buffer)
+        for i in range(len(shift_TrackID_buffer)):
+          for j in range(bufferOfHits.GetSize()):
+            trid = bufferOfHits[j].GetTrackID()
+            if trid >= 0 and j>=i:
+              bufferOfHits[j].SetTrackID(trid-1)
+
+        for j in range(len(remove_MC_buffer)):
+          if not j in shift_TrackID_buffer:
+            bufferOfMCTracks.RemoveAt(remove_MC_buffer[j])
+            for i in range(bufferOfHits.GetSize()):
+              trid = bufferOfHits[i].GetTrackID()
+              if trid == j + 1:
+                bufferOfHits[i].SetTrackID(j)
+        bufferOfMCTracks.Compress()
+        if len(remove_MC_buffer) == bufferOfMCTracks.GetSize():
+          bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_MC_buffer)+1)
+          index_MC_buffer = 0
+        else:
+          bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_MC_buffer))
+          index_MC_buffer = bufferOfMCTracks.GetSize()
+        del remove_MC_buffer[:]
+        shift_TrackID_buffer.clear()
+
       if len(remove_buffer) > 0:
-        #print("size before removing",bufferOfHits.GetSize())
-        #print(remove_buffer)
         for j in range(len(remove_buffer)):
           bufferOfHits.RemoveAt(remove_buffer[j])
-          bufferOfMCTracks.RemoveAt(remove_buffer[j])
         bufferOfHits.Compress()
-        bufferOfMCTracks.Compress()
-        bufferOfHits.Expand(bufferOfHits.GetSize()-len(remove_buffer))
-        bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_buffer))
+        if len(remove_buffer) == bufferOfHits.GetSize():
+          bufferOfHits.Expand(bufferOfHits.GetSize()-len(remove_buffer)+1)
+          index_buffer = 0
+        else:
+          bufferOfHits.Expand(bufferOfHits.GetSize()-len(remove_buffer))
+          index_buffer = bufferOfHits.GetSize()
         del remove_buffer[:]
         #print("size after removing",bufferOfHits.GetSize())
-        index_buffer = bufferOfHits.GetSize()
         #print("index_buffer, buffer loop",index_buffer)
     frame_time += global_variables.deltaT * 1000
     unitedStrawtubesArray.Compress()
+    unitedMCTrackArray.Compress()
     newTree.Fill()
     newTreeMainEventCounter += 1
     insideTheFrameEventCounter = 0
     index = 0
+    index_MCTrack = 0
   rc = sTree.GetEvent(global_variables.iEvent)
+  print("insideTheFrameEventCounter ",insideTheFrameEventCounter)
   insideTheFrameEventCounter += 1
   #sTree.strawtubesPoint.Dump()
   #sTree.MCTrack.Dump()
   for aMCPoint in sTree.strawtubesPoint:
-    aMCPoint.SetTime(aMCPoint.GetTime() + global_time)
-    trid = aMCPoint.GetTrackID()
+    newPoint = ROOT.strawtubesPoint(aMCPoint)
+    newPoint.SetTime(aMCPoint.GetTime() + global_time)
+    trid = newPoint.GetTrackID()
     #print("PDGcode: ",aMCPoint.PdgCode())
-    #print("TrackID: ",trid)
-    if aMCPoint.GetTime() >= frame_time:
-      bufferOfHits.Expand(bufferOfHits.GetSize()+1)
-      bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()+1)
-      #print(bufferOfHits.GetSize())
-      #print("index_buffer, strawtubes point loop",index_buffer)
-      bufferOfHits[index_buffer] = aMCPoint
+    print("TrackID: ",trid)
+    if newPoint.GetTime() >= frame_time:
+      bufferOfHits.Expand(index_buffer+1)
+      print(bufferOfHits.GetSize())
+      print("index_buffer, strawtubes point loop",index_buffer)
+      bufferOfHits[index_buffer] = ROOT.strawtubesPoint(newPoint)
       if trid >= 0:
-        bufferOfMCTracks[index_buffer] = sTree.MCTrack[trid]
-      else:
-        bufferOfMCTracks[index_buffer] = ShipMCTrack()
+        if not trid in used_trids_buffer_pile:
+          bufferOfMCTracks.Expand(index_MC_buffer+1)
+          print("index_MC_buffer",index_MC_buffer)
+          bufferOfHits[index_buffer].SetTrackID(index_MC_buffer)
+          print("Hit new TrackID: ",bufferOfHits[index_buffer].GetTrackID())
+          bufferOfMCTracks[index_MC_buffer] = ROOT.ShipMCTrack(sTree.MCTrack[trid])
+          used_trids_buffer_pile[trid] = index_MC_buffer
+          index_MC_buffer += 1
+        else:
+          bufferOfHits[index_buffer].SetTrackID(used_trids_buffer_pile[trid])
+          print("Hit new TrackID: ",bufferOfHits[index_buffer].GetTrackID())
       index_buffer += 1
     else:
       if unitedStrawtubesArray.GetSize() == index:
         unitedStrawtubesArray.Expand(index+1000)
-      if trid >= 0: 
-        aMCPoint.SetTrackID(insideTheFrameEventCounter * 1000 + trid)
-        unitedStrawtubesArray[index] = aMCPoint
-        unitedMCTrackIndex = aMCPoint.GetTrackID()
-        if not unitedMCTrackIndex in used_trids_buffer: 
-          unitedMCTrackIndex = aMCPoint.GetTrackID()
-          if unitedMCTrackArray.GetSize() <= unitedMCTrackIndex:
-            unitedMCTrackArray.Expand(unitedMCTrackIndex+1000)
-          unitedMCTrackArray[unitedMCTrackIndex] = sTree.MCTrack[trid]
-          used_trids_buffer.append(unitedMCTrackIndex)
-      else:
-        unitedStrawtubesArray[index] = aMCPoint
+      unitedStrawtubesArray[index] = ROOT.strawtubesPoint(newPoint)
+      if trid >= 0:
+        if not trid in used_trids_buffer:
+          if unitedMCTrackArray.GetSize() == index_MCTrack:
+            unitedMCTrackArray.Expand(index_MCTrack+1000)
+          unitedStrawtubesArray[index].SetTrackID(index_MCTrack) 
+          unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(sTree.MCTrack[trid])
+          used_trids_buffer[trid] = index_MCTrack
+          index_MCTrack += 1
+        else:
+          unitedStrawtubesArray[index].SetTrackID(used_trids_buffer[trid])
       index += 1
-  del used_trids_buffer[:]
-  global_time += fPileUp.GetRandom() * 1000
+  print("used_trids_buffer ",used_trids_buffer)
+  print("used_trids_buffer_pile ",used_trids_buffer_pile)
+  used_trids_buffer.clear()
+  used_trids_buffer_pile.clear()
+  global_time += fPileUp.GetRandom() * 1000 # ns
  # memory monitoring
  # mem_monitor()
 # end loop over events

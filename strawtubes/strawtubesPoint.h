@@ -25,7 +25,11 @@ class strawtubesPoint : public FairMCPoint
      **/
     strawtubesPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
                      Double_t tof, Double_t length, Double_t eLoss, Int_t pdgcode,Double_t dist);
-
+    
+    /** Copy constructor **/
+    strawtubesPoint(const strawtubesPoint& point);
+    strawtubesPoint operator=(const strawtubesPoint& point);
+    
     /** Destructor **/
     virtual ~strawtubesPoint();
 
@@ -35,13 +39,10 @@ class strawtubesPoint : public FairMCPoint
     Double_t dist2Wire() const {return fdist2Wire;}
 
   private:
-    /** Copy constructor **/
-    strawtubesPoint(const strawtubesPoint& point);
-    strawtubesPoint operator=(const strawtubesPoint& point);
 
     Int_t fPdgCode;
     Double_t fdist2Wire;
-    ClassDef(strawtubesPoint,2);
+    ClassDef(strawtubesPoint,3);
     
 
 };

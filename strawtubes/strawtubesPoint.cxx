@@ -22,7 +22,25 @@ strawtubesPoint::strawtubesPoint(Int_t trackID, Int_t detID,
 {
 }
 // -------------------------------------------------------------------------
-
+// -----   Copy Constructor   ----------------------------------------------
+strawtubesPoint::strawtubesPoint(const strawtubesPoint &src)
+{
+  FairMultiLinkedData_Interface();
+  fEventId = src.fEventId;
+  fTrackID = src.fTrackID;
+  fDetectorID = src.fDetectorID;
+  fX = src.fX;
+  fY = src.fY;
+  fZ = src.fZ;
+  fPx = src.fPx;
+  fPy = src.fPy;
+  fPz = src.fPz;
+  fTime = src.fTime;
+  fLength = src.fLength;
+  fELoss = src.fELoss;
+  fPdgCode = src.fPdgCode;
+  fdist2Wire = src.fdist2Wire;
+} 
 // -----   Destructor   ----------------------------------------------------
 strawtubesPoint::~strawtubesPoint() { }
 // -------------------------------------------------------------------------
