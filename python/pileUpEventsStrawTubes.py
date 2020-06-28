@@ -102,7 +102,8 @@ index_MC_buffer = 0
 index_MCTrack = 0
 remove_buffer = []
 remove_MC_buffer = []
-shift_TrackID_buffer = {}
+shift_TrackID_buffer = []
+trids_buffer = []
 used_trids_buffer = {}
 used_trids_buffer_pile = {}
 used_trids_buffer_remove = {}
@@ -124,7 +125,7 @@ for global_variables.iEvent in range(0, options.nEvents):
           if unitedStrawtubesArray.GetSize() == index:
             unitedStrawtubesArray.Expand(index+1000)
           unitedStrawtubesArray[index] = ROOT.strawtubesPoint(hit)
-          trid = unitedStrawtubesArray[index].GetTrackID()
+          trid = bufferOfHits[i].GetTrackID()
           print("trid ", trid)
           if trid >= 0:
             if not trid in used_trids_buffer_remove:
@@ -135,6 +136,15 @@ for global_variables.iEvent in range(0, options.nEvents):
               index_MCTrack += 1
               remove_MC_buffer.append(trid)
               used_trids_buffer_remove[trid] = index_MCTrack
+              motherID = unitedMCTrackArray[index_MCTrack].GetMotherId()
+              if motherID >= 0:
+                if not motherID in used_trids_buffer_remove:
+                  unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(bufferOfMCTracks[motherID])
+                  unitedMCTrackArray[index_MCTrack-1].SetMotherId(index_MCTrack)
+                  used_trids_buffer_remove[motherID] = index_MCTrack
+                  index_MCTrack += 1
+                else:
+                  unitedMCTrackArray[index_MCTrack].SetMotherId(used_trids_buffer_remove[motherID])
             else:
               unitedStrawtubesArray[index].SetTrackID(used_trids_buffer_remove[trid])
           remove_buffer.append(i)
@@ -142,27 +152,34 @@ for global_variables.iEvent in range(0, options.nEvents):
         i += 1
       used_trids_buffer_remove.clear()
       print("remove_buffer",remove_buffer)
+      print("remove_MC_buffer",remove_MC_buffer)
       if len(remove_MC_buffer) > 0:
-        for i in range(len(remove_MC_buffer)):
-          for j in range(bufferOfHits.GetSize()):
-            trid = bufferOfHits[j].GetTrackID()
-            if not j in remove_buffer:
-              shift_TrackID_buffer[trid] = j
+        for j in range(bufferOfHits.GetSize()):
+          trid = bufferOfHits[j].GetTrackID()
+          if not j in remove_buffer and trid in remove_MC_buffer:
+            shift_TrackID_buffer.append(trid)
+          if not trid in trids_buffer:
+            trids_buffer.append(trid)
+            motherID = bufferOfMCTracks[trid].GetMotherId()
+            if motherID >= 0 and not motherID in trids_buffer:
+              trids_buffer.append(motherID)
 
         print("shift_TrackID_buffer ",shift_TrackID_buffer)
-        for i in range(len(shift_TrackID_buffer)):
-          for j in range(bufferOfHits.GetSize()):
-            trid = bufferOfHits[j].GetTrackID()
-            if trid >= 0 and j>=i:
-              bufferOfHits[j].SetTrackID(trid-1)
 
+        for i in range(bufferOfMCTracks.GetSize()):
+          if not i in trids_buffer:
+            remove_MC_buffer.append(i)
+        remove_MC_buffer.sort()
+        print("remove_MC_buffer",remove_MC_buffer)
         for j in range(len(remove_MC_buffer)):
-          if not j in shift_TrackID_buffer:
+          if not remove_MC_buffer[j] in shift_TrackID_buffer:
             bufferOfMCTracks.RemoveAt(remove_MC_buffer[j])
+            print("MCTrack removed: ", remove_MC_buffer[j])
             for i in range(bufferOfHits.GetSize()):
               trid = bufferOfHits[i].GetTrackID()
-              if trid == j + 1:
-                bufferOfHits[i].SetTrackID(j)
+              if trid > remove_MC_buffer[j]-j:
+                bufferOfHits[i].SetTrackID(trid - 1)
+                print("new trackID after removing MCTrack", bufferOfHits[i].GetTrackID())
         bufferOfMCTracks.Compress()
         if len(remove_MC_buffer) == bufferOfMCTracks.GetSize():
           bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_MC_buffer)+1)
@@ -171,7 +188,7 @@ for global_variables.iEvent in range(0, options.nEvents):
           bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_MC_buffer))
           index_MC_buffer = bufferOfMCTracks.GetSize()
         del remove_MC_buffer[:]
-        shift_TrackID_buffer.clear()
+        del shift_TrackID_buffer[:]
 
       if len(remove_buffer) > 0:
         for j in range(len(remove_buffer)):
@@ -219,6 +236,15 @@ for global_variables.iEvent in range(0, options.nEvents):
           bufferOfMCTracks[index_MC_buffer] = ROOT.ShipMCTrack(sTree.MCTrack[trid])
           used_trids_buffer_pile[trid] = index_MC_buffer
           index_MC_buffer += 1
+          motherID = bufferOfMCTracks[index_MC_buffer].GetMotherId()
+          if motherID >= 0:
+            if not motherID in used_trids_buffer_pile:
+              bufferOfMCTracks[index_MC_buffer] = ROOT.ShipMCTrack(sTree.MCTrack[motherID])
+              bufferOfMCTracks[index_MC_buffer-1].SetMotherId(index_MC_buffer)
+              used_trids_buffer_pile[motherID] = index_MC_buffer
+              index_MC_buffer += 1
+            else:
+              bufferOfMCTracks[index_MC_buffer].SetMotherId(used_trids_buffer_pile[motherID])
         else:
           bufferOfHits[index_buffer].SetTrackID(used_trids_buffer_pile[trid])
           print("Hit new TrackID: ",bufferOfHits[index_buffer].GetTrackID())
@@ -235,6 +261,15 @@ for global_variables.iEvent in range(0, options.nEvents):
           unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(sTree.MCTrack[trid])
           used_trids_buffer[trid] = index_MCTrack
           index_MCTrack += 1
+          motherID = unitedMCTrackArray[index_MCTrack].GetMotherId()
+          if motherID >= 0:
+            if not motherID in used_trids_buffer:
+              unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(sTree.MCTrack[motherID])
+              unitedMCTrackArray[index_MCTrack-1].SetMotherId(index_MCTrack)
+              used_trids_buffer[motherID] = index_MCTrack
+              index_MCTrack += 1
+            else:
+              unitedMCTrackArray[index_MCTrack].SetMotherId(used_trids_buffer[motherID])
         else:
           unitedStrawtubesArray[index].SetTrackID(used_trids_buffer[trid])
       index += 1
