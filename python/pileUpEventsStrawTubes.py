@@ -55,7 +55,7 @@ run.SetOutputFile(ROOT.TMemFile('output', 'recreate'))  # Output file
 run.SetUserConfig("g4Config_basic.C") # geant4 transport not used, only needed for creating VMC field
 rtdb = run.GetRuntimeDb()
 # -----Create geometry----------------------------------------------
-modules = shipDet_conf.configure(run,ShipGeo)
+#modules = shipDet_conf.configure(run,ShipGeo)
 # run.Init()
 fgeo.FAIRGeom
 import geomGeant4
@@ -68,7 +68,7 @@ global_variables.fieldMaker = fieldMaker
 global_variables.withT0 = options.withT0
 global_variables.ecalGeoFile = ecalGeoFile
 global_variables.ShipGeo = ShipGeo
-global_variables.modules = modules
+#global_variables.modules = modules
 global_variables.iEvent = 0
 global_variables.deltaT = options.deltaT
 global_variables.rate = options.rate
@@ -129,14 +129,14 @@ for global_variables.iEvent in range(0, options.nEvents):
           #print("trid ", trid)
           if trid >= 0:
             if not trid in used_trids_buffer_remove:
-              if unitedMCTrackArray.GetSize() == index_MCTrack:
+              if unitedMCTrackArray.GetSize() <= index_MCTrack+1:
                 unitedMCTrackArray.Expand(index_MCTrack+1000)
               unitedStrawtubesArray[index].SetTrackID(index_MCTrack)
               unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(bufferOfMCTracks[trid])
-              index_MCTrack += 1
               remove_MC_buffer.append(trid)
               used_trids_buffer_remove[trid] = index_MCTrack
               motherID = unitedMCTrackArray[index_MCTrack].GetMotherId()
+              index_MCTrack += 1
               if motherID >= 0:
                 if not motherID in used_trids_buffer_remove:
                   unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(bufferOfMCTracks[motherID])
@@ -144,7 +144,7 @@ for global_variables.iEvent in range(0, options.nEvents):
                   used_trids_buffer_remove[motherID] = index_MCTrack
                   index_MCTrack += 1
                 else:
-                  unitedMCTrackArray[index_MCTrack].SetMotherId(used_trids_buffer_remove[motherID])
+                  unitedMCTrackArray[index_MCTrack-1].SetMotherId(used_trids_buffer_remove[motherID])
             else:
               unitedStrawtubesArray[index].SetTrackID(used_trids_buffer_remove[trid])
           remove_buffer.append(i)
@@ -173,6 +173,11 @@ for global_variables.iEvent in range(0, options.nEvents):
         #print("remove_MC_buffer",remove_MC_buffer)
         for j in range(len(remove_MC_buffer)):
           if not remove_MC_buffer[j] in shift_TrackID_buffer:
+            for k in range(remove_MC_buffer[j]+1,bufferOfMCTracks.GetSize()):
+              motherID = bufferOfMCTracks[k].GetMotherId()
+              if motherID > remove_MC_buffer[j]:
+                bufferOfMCTracks[k].SetMotherId(motherID - 1)
+                #print("new motherID after removing MCTrack", bufferOfMCTracks[k].GetMotherId())
             bufferOfMCTracks.RemoveAt(remove_MC_buffer[j])
             #print("MCTrack removed: ", remove_MC_buffer[j])
             for i in range(bufferOfHits.GetSize()):
@@ -234,16 +239,17 @@ for global_variables.iEvent in range(0, options.nEvents):
           #print("Hit new TrackID: ",bufferOfHits[index_buffer].GetTrackID())
           bufferOfMCTracks[index_MC_buffer] = ROOT.ShipMCTrack(sTree.MCTrack[trid])
           used_trids_buffer_pile[trid] = index_MC_buffer
-          index_MC_buffer += 1
           motherID = bufferOfMCTracks[index_MC_buffer].GetMotherId()
+          index_MC_buffer += 1
           if motherID >= 0:
             if not motherID in used_trids_buffer_pile:
+              bufferOfMCTracks.Expand(index_MC_buffer+1)
               bufferOfMCTracks[index_MC_buffer] = ROOT.ShipMCTrack(sTree.MCTrack[motherID])
               bufferOfMCTracks[index_MC_buffer-1].SetMotherId(index_MC_buffer)
               used_trids_buffer_pile[motherID] = index_MC_buffer
               index_MC_buffer += 1
             else:
-              bufferOfMCTracks[index_MC_buffer].SetMotherId(used_trids_buffer_pile[motherID])
+              bufferOfMCTracks[index_MC_buffer-1].SetMotherId(used_trids_buffer_pile[motherID])
         else:
           bufferOfHits[index_buffer].SetTrackID(used_trids_buffer_pile[trid])
           #print("Hit new TrackID: ",bufferOfHits[index_buffer].GetTrackID())
@@ -254,13 +260,13 @@ for global_variables.iEvent in range(0, options.nEvents):
       unitedStrawtubesArray[index] = ROOT.strawtubesPoint(newPoint)
       if trid >= 0:
         if not trid in used_trids_buffer:
-          if unitedMCTrackArray.GetSize() == index_MCTrack:
+          if unitedMCTrackArray.GetSize() <= index_MCTrack+1:
             unitedMCTrackArray.Expand(index_MCTrack+1000)
           unitedStrawtubesArray[index].SetTrackID(index_MCTrack) 
           unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(sTree.MCTrack[trid])
           used_trids_buffer[trid] = index_MCTrack
-          index_MCTrack += 1
           motherID = unitedMCTrackArray[index_MCTrack].GetMotherId()
+          index_MCTrack += 1
           if motherID >= 0:
             if not motherID in used_trids_buffer:
               unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(sTree.MCTrack[motherID])
@@ -268,7 +274,7 @@ for global_variables.iEvent in range(0, options.nEvents):
               used_trids_buffer[motherID] = index_MCTrack
               index_MCTrack += 1
             else:
-              unitedMCTrackArray[index_MCTrack].SetMotherId(used_trids_buffer[motherID])
+              unitedMCTrackArray[index_MCTrack-1].SetMotherId(used_trids_buffer[motherID])
         else:
           unitedStrawtubesArray[index].SetTrackID(used_trids_buffer[trid])
       index += 1
