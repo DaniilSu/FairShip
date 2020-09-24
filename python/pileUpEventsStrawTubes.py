@@ -140,6 +140,7 @@ for global_variables.iEvent in range(0, options.nEvents):
               if motherID >= 0:
                 if not motherID in used_trids_buffer_remove:
                   unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(bufferOfMCTracks[motherID])
+                  unitedMCTrackArray[index_MCTrack].SetMotherId(-1)
                   unitedMCTrackArray[index_MCTrack-1].SetMotherId(index_MCTrack)
                   used_trids_buffer_remove[motherID] = index_MCTrack
                   index_MCTrack += 1
@@ -245,6 +246,7 @@ for global_variables.iEvent in range(0, options.nEvents):
             if not motherID in used_trids_buffer_pile:
               bufferOfMCTracks.Expand(index_MC_buffer+1)
               bufferOfMCTracks[index_MC_buffer] = ROOT.ShipMCTrack(sTree.MCTrack[motherID])
+              bufferOfMCTracks[index_MC_buffer].SetMotherId(-1)
               bufferOfMCTracks[index_MC_buffer-1].SetMotherId(index_MC_buffer)
               used_trids_buffer_pile[motherID] = index_MC_buffer
               index_MC_buffer += 1
@@ -270,6 +272,7 @@ for global_variables.iEvent in range(0, options.nEvents):
           if motherID >= 0:
             if not motherID in used_trids_buffer:
               unitedMCTrackArray[index_MCTrack] = ROOT.ShipMCTrack(sTree.MCTrack[motherID])
+              unitedMCTrackArray[index_MCTrack].SetMotherId(-1)
               unitedMCTrackArray[index_MCTrack-1].SetMotherId(index_MCTrack)
               used_trids_buffer[motherID] = index_MCTrack
               index_MCTrack += 1
