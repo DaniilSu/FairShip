@@ -110,10 +110,17 @@ used_trids_buffer_pile = {}
 used_trids_buffer_remove = {}
 insideTheFrameEventCounter = 0
 # main loop
-for global_variables.iEvent in range(0, options.nEvents):
+for global_variables.iEvent in range(0, options.nEvents+1):
   if global_variables.iEvent % 1000 == 0:
     print('event ', global_variables.iEvent)
   if global_time >= frame_time:
+    frame_time += global_variables.deltaT * 1000
+    unitedStrawtubesArray.Compress()
+    unitedMCTrackArray.Compress()
+    newTree.Fill()
+    insideTheFrameEventCounter = 0
+    index = 0
+    index_MCTrack = 0
     if index_buffer > 0:
       i = 0
       #bufferOfHits.Dump()
@@ -178,6 +185,8 @@ for global_variables.iEvent in range(0, options.nEvents):
               motherID = bufferOfMCTracks[k].GetMotherId()
               if motherID > remove_MC_buffer[j]:
                 bufferOfMCTracks[k].SetMotherId(motherID - 1)
+              if motherID == remove_MC_buffer[j]:
+                bufferOfMCTracks[k].SetMotherId(-1)
                 #print("new motherID after removing MCTrack", bufferOfMCTracks[k].GetMotherId())
             bufferOfMCTracks.RemoveAt(remove_MC_buffer[j])
             #print("MCTrack removed: ", remove_MC_buffer[j])
@@ -188,35 +197,33 @@ for global_variables.iEvent in range(0, options.nEvents):
                 #print("new trackID after removing MCTrack", bufferOfHits[i].GetTrackID())
         bufferOfMCTracks.Compress()
         if len(remove_MC_buffer) == bufferOfMCTracks.GetSize():
-          bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_MC_buffer)+1)
+          bufferOfMCTracks.Expand(1)
           index_MC_buffer = 0
         else:
           bufferOfMCTracks.Expand(bufferOfMCTracks.GetSize()-len(remove_MC_buffer))
-          index_MC_buffer = bufferOfMCTracks.GetSize()
+          index_MC_buffer = bufferOfMCTracks.GetSize() - 1
         del remove_MC_buffer[:]
         del shift_TrackID_buffer[:]
+        del trids_buffer[:]
 
       if len(remove_buffer) > 0:
         for j in range(len(remove_buffer)):
           bufferOfHits.RemoveAt(remove_buffer[j])
         bufferOfHits.Compress()
         if len(remove_buffer) == bufferOfHits.GetSize():
-          bufferOfHits.Expand(bufferOfHits.GetSize()-len(remove_buffer)+1)
+          bufferOfHits.Expand(1)
           index_buffer = 0
         else:
           bufferOfHits.Expand(bufferOfHits.GetSize()-len(remove_buffer))
-          index_buffer = bufferOfHits.GetSize()
+          index_buffer = bufferOfHits.GetSize() - 1
         del remove_buffer[:]
         #print("size after removing",bufferOfHits.GetSize())
         #print("index_buffer, buffer loop",index_buffer)
-    frame_time += global_variables.deltaT * 1000
-    unitedStrawtubesArray.Compress()
-    unitedMCTrackArray.Compress()
-    newTree.Fill()
-    insideTheFrameEventCounter = 0
-    index = 0
-    index_MCTrack = 0
-  rc = sTree.GetEvent(global_variables.iEvent)
+ 
+  try:
+    rc = sTree.GetEvent(global_variables.iEvent)
+  except:
+    continue
   #print("insideTheFrameEventCounter ",insideTheFrameEventCounter)
   insideTheFrameEventCounter += 1
   #sTree.strawtubesPoint.Dump()
